@@ -309,7 +309,14 @@ export interface TypeB {
 }
 
 "#;
-        assert_eq!(types_index_content.trim(), expected_content.trim());
+        assert_eq!(
+            types_index_content.trim().replace("
+", "
+"),
+            expected_content.trim().replace("
+", "
+")
+        );
     }
 
     #[test]
