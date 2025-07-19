@@ -2,14 +2,16 @@ const fs = require('fs');
 const path = require('path');
 const { platform, arch } = process;
 
-// node-fetchを動的にrequireする
+// node-fetchとadm-zipを動的にrequireする
 let nodeFetch;
+let AdmZip;
 
 try {
   const nodeFetchModule = require('node-fetch');
   nodeFetch = nodeFetchModule.default; // fetchをnodeFetchにリネーム
+  AdmZip = require('adm-zip');
 } catch (e) {
-  console.error('node-fetch not found. Please ensure npm install has completed successfully.');
+  console.error('node-fetch or adm-zip not found. Please ensure npm install has completed successfully.');
   console.error('Error details:', e.message);
   process.exit(1);
 }
@@ -18,25 +20,13 @@ const packageName = 'tauria-tsgen'; // package.jsonのnameと合わせる
 const owner = 'yamada28go'; // GitHubのリポジトリオーナー名
 const repo = 'tauria-tsgen'; // GitHubのリポジトリ名
 
-async function getLatestReleaseVersion() {
-  try {
-    const response = await nodeFetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch latest release: ${response.statusText}`);
-    }
-    const data = await response.json();
-    return data.tag_name.replace(/^v/, ''); // 'v1.0.0' -> '1.0.0' のように 'v' プレフィックスを削除
-  } catch (error) {
-    console.error(`Error getting latest release version from GitHub API: ${error.message}`);
-    // GitHub APIから取得できない場合は、package.jsonのバージョンをフォールバックとして使用
-    const packageJsonPath = path.join(__dirname, '..', 'package.json');
-    if (fs.existsSync(packageJsonPath)) {
-      const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
-      console.warn(`Falling back to version from package.json: ${packageJson.version}`);
-      return packageJson.version;
-    }
-    throw error; // package.jsonもなければエラー
+async function getPackageVersion() {
+  const packageJsonPath = path.join(__dirname, '..', 'package.json');
+  if (fs.existsSync(packageJsonPath)) {
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    return packageJson.version;
   }
+  throw new Error('package.json not found.');
 }
 
 async function downloadBinary() {
@@ -77,11 +67,12 @@ async function downloadBinary() {
       process.exit(1);
   }
 
-  const version = await getLatestReleaseVersion();
-  const assetName = `${packageName}-${targetOs}-${targetArch}${binaryExtension}`;
+  const version = await getPackageVersion();
+  const assetName = `${packageName}-${targetOs}-${targetArch}.zip`; // ZIPファイル名に変更
   const downloadUrl = `https://github.com/${owner}/${repo}/releases/download/v${version}/${assetName}`;
   const binDir = path.join(__dirname, '..', 'bin');
   const binaryPath = path.join(binDir, `${packageName}${binaryExtension}`);
+  const tempZipPath = path.join(binDir, `${assetName}`); // 一時ZIPファイルのパス
 
   console.log(`Attempting to download ${packageName} v${version} for ${platform}-${arch}...`);
   console.log(`Download URL: ${downloadUrl}`);
@@ -96,17 +87,37 @@ async function downloadBinary() {
       throw new Error(`Failed to download binary: ${response.statusText} (URL: ${downloadUrl})`);
     }
 
-    const fileStream = fs.createWriteStream(binaryPath);
+    const fileStream = fs.createWriteStream(tempZipPath);
     await new Promise((resolve, reject) => {
       response.body.pipe(fileStream);
       response.body.on('error', reject);
       fileStream.on('finish', resolve);
     });
 
-    console.log(`Downloaded binary to ${binaryPath}`);
+    console.log(`Downloaded ${assetName} to ${tempZipPath}`);
+
+    // ZIPファイルを解凍
+    const zip = new AdmZip(tempZipPath);
+    zip.extractAllTo(binDir, true); // trueは上書きを許可
+
+    // 解凍後のファイル名を特定し、適切な名前にリネーム
+    // ZIPファイルには通常、単一のバイナリが含まれると仮定
+    const expectedBinaryPrefix = `${packageName}-${targetOs}-${targetArch}`;
+    const extractedFiles = zip.getEntries().map(entry => entry.entryName);
+    const extractedBinaryName = extractedFiles.find(name => name.startsWith(expectedBinaryPrefix) && name.endsWith(binaryExtension));
+
+    if (extractedBinaryName) {
+      fs.renameSync(path.join(binDir, extractedBinaryName), binaryPath);
+      console.log(`Extracted and moved binary to ${binaryPath}`);
+    } else {
+      throw new Error(`Could not find binary in downloaded zip: ${extractedFiles.join(', ')}`);
+    }
+
+    fs.unlinkSync(tempZipPath); // 一時ZIPファイルを削除
+    console.log('Binary download and extraction complete.');
 
   } catch (error) {
-    console.error(`Error during binary download: ${error.message}`);
+    console.error(`Error during binary download or extraction: ${error.message}`);
     console.error('Please ensure your network connection is stable and the binary exists for your platform on GitHub Releases.');
     process.exit(1);
   }
