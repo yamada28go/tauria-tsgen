@@ -18,6 +18,9 @@ jobs:
           - name: Linux (x86_64)
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
+          - name: macOS (x86_64)
+            os: macos-latest
+            target: x86_64-apple-darwin
           - name: macOS (Apple Silicon)
             os: macos-latest
             target: aarch64-apple-darwin
@@ -36,7 +39,7 @@ jobs:
 
       - name: Get project version
         id: get_version
-        uses: automations/get-cargo-version@v1
+        run: echo "version=$(cargo pkgid | cut -d'#' -f2)" >> $GITHUB_OUTPUT
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
