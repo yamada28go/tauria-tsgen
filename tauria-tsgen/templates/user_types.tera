@@ -1,0 +1,27 @@
+{% if ts_interface.type == "interface" %}
+export interface {{ ts_interface.name }} {
+{% if ts_interface.fields %}
+{% for field in ts_interface.fields %}
+    /**
+{% for line in field.doc_comment | split(pat="\n") -%}
+     * {{ line | trim }}
+{% endfor -%}
+     */
+    {{ field.name }}: {{ field.type }};
+{% endfor %}
+{% endif %}
+}
+{% elif ts_interface.type == "enum" %}
+export enum {{ ts_interface.name }} {
+{% if ts_interface.variants %}
+{% for variant in ts_interface.variants %}
+    /**
+{% for line in variant.doc_comment | split(pat="\n") -%}
+     * {{ line | trim }}
+{% endfor -%}
+     */
+    {{ variant.name }} = "{{ variant.name }}", // TODO: Handle different enum types (tuple, struct variants)
+{% endfor %}
+{% endif %}
+}
+{% endif %}

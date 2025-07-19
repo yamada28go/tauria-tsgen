@@ -1,0 +1,300 @@
+use rust_embed::RustEmbed;
+use std::path::Path;
+#[allow(unused_imports)]
+use syn::{Attribute, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat, Type};
+use tera::{Context, Tera};
+
+#[derive(RustEmbed)]
+#[folder = "templates/"]
+pub struct Asset;
+
+#[allow(unused_variables)]
+/// Generates TypeScript files from Rust code.
+///
+/// This function parses Rust code, extracts Tauri commands and user-defined types,
+/// and generates corresponding TypeScript files for interfaces, Tauri APIs, and mock APIs.
+///
+/// # Arguments
+///
+/// * `rust_code` - A string slice containing the Rust code to be parsed.
+/// * `output_dir` - The root directory where the generated TypeScript files will be saved.
+/// * `file_name` - The base name for the generated TypeScript files.
+///
+/// # Returns
+///
+/// An `anyhow::Result<(bool, Vec<serde_json::Value>)>` indicating whether any command files were generated and the extracted TypeScript interfaces.
+pub fn generate_ts_files(
+    rust_code: &str,
+    output_dir: &Path,
+    file_name: &str,
+    generate_mock_api: bool,
+) -> anyhow::Result<(
+    bool,
+    Vec<crate::generator::type_extractor::ExtractedTypeInfo>,
+)> {
+    let mut tera = Tera::default();
+    // テンプレートの読み込み
+    tera.add_raw_template(
+        "command_interfaces.tera",
+        std::str::from_utf8(Asset::get("command_interfaces.tera").unwrap().data.as_ref())?,
+    )?;
+    tera.add_raw_template(
+        "tauria_api.tera",
+        std::str::from_utf8(Asset::get("tauria_api.tera").unwrap().data.as_ref())?,
+    )?;
+    tera.add_raw_template(
+        "mock_api.tera",
+        std::str::from_utf8(Asset::get("mock_api.tera").unwrap().data.as_ref())?,
+    )?;
+    tera.add_raw_template(
+        "user_types.tera",
+        std::str::from_utf8(Asset::get("user_types.tera").unwrap().data.as_ref())?,
+    )?;
+    tera.autoescape_on(vec![]);
+
+    use convert_case::{Case, Casing};
+    tera.register_filter(
+        "pascalcase",
+        move |value: &tera::Value, _: &std::collections::HashMap<String, tera::Value>| {
+            let s = match value.as_str() {
+                Some(s) => s,
+                None => {
+                    return Err(tera::Error::msg(
+                        "pascalcase filter can only be used on strings",
+                    ));
+                }
+            };
+            Ok(tera::Value::String(s.to_case(Case::Pascal)))
+        },
+    );
+
+    let syntax = syn::parse_file(rust_code)?;
+
+    let all_extracted_types = super::type_extractor::extract_and_convert_types(&syntax.items);
+    let defined_types_names: Vec<String> = all_extracted_types
+        .iter()
+        .map(|info| info.name.clone())
+        .collect();
+    let functions =
+        super::type_extractor::extract_tauri_commands(&syntax.items, &all_extracted_types);
+
+    // 出力ディレクトリの作成
+    std::fs::create_dir_all(output_dir)?;
+    let interface_dir = output_dir.join("interface");
+    let tauri_api_dir = output_dir.join("tauria-api");
+    let mock_api_dir = output_dir.join("mock-api");
+
+    std::fs::create_dir_all(&interface_dir)?;
+    std::fs::create_dir_all(&tauri_api_dir)?;
+    if generate_mock_api {
+        std::fs::create_dir_all(&mock_api_dir)?;
+    }
+
+    // コマンドインターフェースファイルの生成
+    if !functions.is_empty() {
+        let commands_dir = interface_dir.join("commands");
+        std::fs::create_dir_all(&commands_dir)?;
+        let mut command_context = Context::new();
+        command_context.insert("functions", &functions);
+        use convert_case::{Case, Casing};
+        let interface_name = file_name.to_case(Case::Pascal);
+        command_context.insert("interface_name", &interface_name);
+        let has_user_defined_types_in_file = functions.iter().any(|f| {
+            let args = f["args"].as_array().unwrap();
+            let return_type = f["return_type"].as_str().unwrap();
+            args.iter().any(|arg| arg.as_str().unwrap().contains("T."))
+                || return_type.contains("T.")
+        });
+        command_context.insert(
+            "has_user_defined_types_in_file",
+            &has_user_defined_types_in_file,
+        );
+        let command_interfaces_rendered =
+            tera.render("command_interfaces.tera", &command_context)?;
+        let pascal_case_file_name = file_name.to_case(Case::Pascal);
+        std::fs::write(
+            commands_dir.join(format!("{pascal_case_file_name}.ts")),
+            command_interfaces_rendered,
+        )?;
+    }
+
+    // Tauri APIファイルの生成
+    if !functions.is_empty() {
+        let mut tauri_api_context = Context::new();
+        tauri_api_context.insert("functions", &functions);
+        tauri_api_context.insert("file_name", &file_name);
+        let tauri_api_rendered = tera.render("tauria_api.tera", &tauri_api_context)?;
+        use convert_case::{Case, Casing};
+        let pascal_case_file_name = file_name.to_case(Case::Pascal);
+        std::fs::write(
+            tauri_api_dir.join(format!("{pascal_case_file_name}.ts")),
+            tauri_api_rendered,
+        )?;
+    }
+
+    if generate_mock_api && !functions.is_empty() {
+        std::fs::create_dir_all(&mock_api_dir)?;
+        let mut mock_api_context = Context::new();
+        mock_api_context.insert("functions", &functions);
+        mock_api_context.insert("file_name", &file_name);
+        let mock_api_rendered = tera.render("mock_api.tera", &mock_api_context)?;
+        use convert_case::{Case, Casing};
+        let pascal_case_file_name = file_name.to_case(Case::Pascal);
+        std::fs::write(
+            mock_api_dir.join(format!("{pascal_case_file_name}.ts")),
+            mock_api_rendered,
+        )?;
+    }
+
+    Ok((!functions.is_empty(), all_extracted_types))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::path::PathBuf;
+
+    #[allow(dead_code)]
+    fn run_ts_wrapper_test(test_case_name: &str) {
+        use convert_case::{Case, Casing};
+        let pascal_case_file_name = test_case_name.to_case(Case::Pascal);
+        #[allow(unused_variables)]
+        let rust_file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("test/data")
+            .join(test_case_name)
+            .join("src")
+            .join(format!("{}.rs", test_case_name));
+        let output_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("target/generated_ts")
+            .join(test_case_name);
+
+        // 既存の出力ディレクトリをクリーンアップ
+        if output_dir.exists() {
+            fs::remove_dir_all(&output_dir)
+                .expect("出力ディレクトリのクリーンアップに失敗しました");
+        }
+        fs::create_dir_all(&output_dir).expect("出力ディレクトリの作成に失敗しました");
+
+        let rust_code = fs::read_to_string(&rust_file_path).expect("Rustファイルが読み込めません");
+        let file_name = test_case_name;
+
+        let result = generate_ts_files(&rust_code, &output_dir, file_name, false);
+
+        assert!(result.is_ok());
+
+        // 生成されたファイルの内容を読み込み、期待される内容と比較
+        let generated_interface_path = output_dir
+            .join("interface")
+            .join("commands")
+            .join(format!("{}.ts", pascal_case_file_name));
+        let generated_tauri_api_path = output_dir
+            .join("tauria-api")
+            .join(format!("{}.ts", pascal_case_file_name));
+        #[allow(unused_variables)]
+        let _generated_mock_api_path = output_dir
+            .join("mock-api")
+            .join(format!("{}.ts", pascal_case_file_name));
+
+        #[allow(unused_variables)]
+        let generated_interface = fs::read_to_string(&generated_interface_path)
+            .expect("生成されたインターフェースファイルが読み込めません");
+        #[allow(unused_variables)]
+        let generated_tauri_api = fs::read_to_string(&generated_tauri_api_path)
+            .expect("生成されたTauri APIファイルが読み込めません");
+
+        // 期待されるファイルの内容を読み込み
+
+        // 期待されるファイルの内容を読み込み
+        let expected_interface_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("test/data")
+            .join(test_case_name)
+            .join("expected")
+            .join("interface")
+            .join("commands")
+            .join(format!("{}.ts", pascal_case_file_name));
+        let expected_tauri_api_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("test/data")
+            .join(test_case_name)
+            .join("expected")
+            .join("tauria-api")
+            .join(format!("{}.ts", pascal_case_file_name));
+
+        let expected_interface = fs::read_to_string(&expected_interface_path)
+            .expect("期待されるインターフェースファイルが読み込めません");
+        let expected_tauri_api = fs::read_to_string(&expected_tauri_api_path)
+            .expect("期待されるTauri APIファイルが読み込めません");
+
+        // 比較
+        assert_eq!(
+            generated_interface.trim(),
+            expected_interface.trim(),
+            "インターフェースファイルの内容が一致しません"
+        );
+        assert_eq!(
+            generated_tauri_api.trim(),
+            expected_tauri_api.trim(),
+            "Tauri APIファイルの内容が一致しません"
+        );
+
+        // mock-api ディレクトリとファイルが存在しないことを確認
+        assert!(!output_dir.join("mock-api").exists());
+        assert!(
+            !output_dir
+                .join("mock-api")
+                .join(format!("{}.ts", pascal_case_file_name))
+                .exists()
+        );
+
+        // index.ts の比較 (簡易的に存在チェックのみ)
+        // assert!(output_dir.join("interface").join("index.ts").exists());
+        // assert!(output_dir.join("tauria-api").join("index.ts").exists());
+        // assert!(output_dir.join("mock-api").join("index.ts").exists());
+        // assert!(output_dir.join("index.ts").exists());
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_basic_file() {
+        run_ts_wrapper_test("basic");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_struct_test_file() {
+        run_ts_wrapper_test("struct_test");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_enum_test_file() {
+        run_ts_wrapper_test("enum_test");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_nesting_type_test() {
+        run_ts_wrapper_test("nesting_type_test");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_app_handle() {
+        run_ts_wrapper_test("app_handle");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_webview_window() {
+        run_ts_wrapper_test("webview_window");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_state() {
+        run_ts_wrapper_test("state");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_response() {
+        run_ts_wrapper_test("response");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_window() {
+        run_ts_wrapper_test("window");
+    }
+}

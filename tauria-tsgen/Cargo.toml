@@ -1,0 +1,17 @@
+[package]
+name = "tauria-tsgen"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+syn = { version = "2.0", features = ["full", "extra-traits"] }
+clap = { version = "4.0", features = ["derive"] }
+log = "0.4"
+env_logger = "0.11"
+tera = "1.19"
+tempfile = "3.10"
+anyhow = "1.0"
+convert_case = "0.6"
+rust-embed = "8.0"
