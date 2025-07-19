@@ -1,7 +1,6 @@
-// package.json
 {
   "name": "tauria-tsgen",
-  "version": "0.0.0",
+  "version": "0.1.7",
   "description": "A CLI tool to generate TypeScript interfaces from Rust Tauri commands.",
   "keywords": [
     "tauri",
@@ -25,8 +24,8 @@
     "tauria-tsgen": "./bin/tauria-tsgen"
   },
   "scripts": {
-    "preinstall": "node scripts/download-binary.js",
     "postinstall": "node scripts/postinstall.js",
+    "download-binary": "node scripts/download-binary.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
