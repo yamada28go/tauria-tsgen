@@ -36,7 +36,7 @@ jobs:
 
       - name: Get project version
         id: get_version
-        uses: cargo-get-version-action@v1
+        uses: martin-software/cargo-get-version-action@v1
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
