@@ -8,7 +8,7 @@
 
 ## Key Features
 
--   **Automatic Identification and TypeScript Conversion of Rust Commands:**
+-   **Automatic Identification and TypeScript Conversion of Rust Code Tauri Commands:**
     -   Automatically identifies functions with the `#[tauri::command]` attribute from specified Rust files.
     -   Generates corresponding TypeScript type definitions and asynchronous wrapper functions based on the argument and return types of the identified Rust functions.
 
@@ -87,118 +87,52 @@ Available log levels: `error`, `warn`, `info`, `debug`, `trace`
 
 ## Input and Output Examples
 
-### Rust Input Example (`src/commands.rs`)
+### Rust Input Example (`src/cmd1.rs`)
 
 ```rust
-use tauri::{command, AppHandle, State, WebviewWindow};
-
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
-pub struct User {
-    pub id: u32,
-    pub name: String,
-}
+use tauri::command;
 
 #[command]
-pub fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
-}
-
-#[command]
-pub fn get_user(id: u32) -> User {
-    User { id, name: "Test User".to_string() }
-}
-
-#[command]
-pub fn update_user(user: User, app_handle: AppHandle) -> Result<String, String> {
-    // app_handle is ignored on the TypeScript side
-    Ok(format!("User {} updated.", user.name))
-}
-
-#[command]
-pub fn get_state(state: State<'_, String>) -> String {
-    // state is ignored on the TypeScript side
-    state.inner().clone()
-}
-
-#[command]
-pub fn close_window(window: WebviewWindow) {
-    // window is ignored on the TypeScript side
-    window.close().unwrap();
+pub fn command1() -> String {
+    "Command 1 executed".to_string()
 }
 ```
 
-### Generated TypeScript Output Example (`src/bindings/commands/Commands.ts`)
+### Rust Input Example (`src/cmd2.rs`)
+
+```rust
+use tauri::command;
+
+#[command]
+pub fn command2() -> String {
+    "Command 2 executed".to_string()
+}
+```
+
+### Generated TypeScript Output Example (`src/bindings/commands/Cmd1.ts`)
 
 ```typescript
-// src/bindings/commands/Commands.ts
+// src/bindings/commands/Cmd1.ts
 
 import { invoke } from '@tauri-apps/api/tauri';
 
-export interface User {
-  id: number;
-  name: string;
-}
-
-export class Commands {
-  static async greet(name: string): Promise<string> {
-    return await invoke('greet', { name });
-  }
-
-  static async getUser(id: number): Promise<User> {
-    return await invoke('get_user', { id });
-  }
-
-  static async updateUser(user: User): Promise<string> {
-    return await invoke('update_user', { user });
-  }
-
-  static async getState(): Promise<string> {
-    return await invoke('get_state');
-  }
-
-  static async closeWindow(): Promise<void> {
-    return await invoke('close_window');
+export class Cmd1 {
+  static async command1(): Promise<string> {
+    return await invoke('command1');
   }
 }
 ```
 
-### Generated TypeScript Output Example (`src/bindings/types/User.ts`)
+### Generated TypeScript Output Example (output_directory/interface/commands/Cmd1.ts)
 
 ```typescript
-// src/bindings/types/User.ts
-
-export interface User {
-  id: number;
-  name: string;
-}
-```
-
-### Generated JavaScript Output Example (`src/bindings/commands/Commands.js`)
-
-```javascript
-// src/bindings/commands/Commands.js
+// src/bindings/commands/Cmd2.ts
 
 import { invoke } from '@tauri-apps/api/tauri';
 
-export class Commands {
-  static async greet(name) {
-    return await invoke('greet', { name });
-  }
-
-  static async getUser(id) {
-    return await invoke('get_user', { id });
-  }
-
-  static async updateUser(user) {
-    return await invoke('update_user', { user });
-  }
-
-  static async getState() {
-    return await invoke('get_state');
-  }
-
-  static async closeWindow() {
-    return await invoke('close_window');
+export class Cmd2 {
+  static async command2(): Promise<string> {
+    return await invoke('command2');
   }
 }
 ```
@@ -206,20 +140,56 @@ export class Commands {
 ## Generated File Directory Structure
 
 `tauria-tsgen` generates TypeScript files while maintaining the directory structure of the input Rust files.
-For example, if you specify `./src-tauri/src` for `--input-path` and `./src/bindings` for `--output-path`, files will be generated with the following directory structure:
+For example, if you specify `./src/bindings` for `--output-path`, files will be generated directly within that directory with the following structure:
 
 ```
-./src/bindings/
-├───commands/
-│   └───Commands.ts
-├───types/
-│   └───User.ts
+./src/bindings/  <-- This is the directory specified by --output-path
+├───tauria-api/
+│   ├───Cmd1.ts
+│   ├───Cmd2.ts
+│   └───index.ts
+├───interface/
+│   ├───commands/
+│   │   ├───Cmd1.ts
+│   │   └───Cmd2.ts
+│   └───types/
+│       └───index.ts
 └───index.ts
 ```
 
-- `commands/`: TypeScript wrapper functions corresponding to Rust files with `#[tauri::command]` are generated. The file names are determined based on the Rust module names.
-- `types/`: TypeScript interfaces and types corresponding to Rust `struct`s, `enum`s, etc., are generated.
+- `tauria-api/`: Wrapper functions that directly call Tauri's `invoke` function are generated.
+- `interface/commands/`: TypeScript interfaces corresponding to functions with `#[tauri::command]` are generated. The file names are determined based on the Rust module names.
+- `interface/types/`: TypeScript interfaces and types corresponding to Rust `struct`s, `enum`s, etc., are generated.
 - `index.ts`: This is an entry point file that exports all generated commands and types.
+
+### Usage Example of Generated API
+
+The Tauri command wrappers generated by `tauria-tsgen` can be instantiated via a factory function, allowing type-safe calls to Rust commands.
+
+#### TypeScript Usage Example
+
+```typescript
+import { createCmd } from './src/bindings/tauria-api'; // Adjust according to your output path
+
+async function callTauriCommands() {
+  const cmdApi = createCmd(); // Instantiate Cmd class
+
+  try {
+    // Call the Rust get_user_data command
+    const result = await cmdApi.command1();
+    console.log('Result of command1:', result);
+
+    // Other commands can be called similarly
+    // const result = await cmdApi.some_other_command();
+    // console.log('Result of other command:', result);
+
+  } catch (error) {
+    console.error('Error calling Tauri command:', error);
+  }
+}
+
+callTauriCommands();
+```
 
 ## For Developers
 

@@ -6,7 +6,7 @@
 
 ## 主な機能
 
--   **Rustコマンドの自動識別とTypeScript変換:**
+-   **Rustコード内tauriコマンドの自動識別とTypeScript変換:**
     -   指定されたRustファイルから `#[tauri::command]` アトリビュートが付与された関数を自動的に識別します。
     -   識別されたRust関数の引数と戻り値の型に基づいて、対応するTypeScriptの型定義と非同期ラッパー関数を生成します。
 
@@ -85,118 +85,52 @@ RUST_LOG=info cargo run -- -c config.json
 
 ## 入力と出力の例
 
-### Rustの入力例 (`src/commands.rs`)
+### Rustの入力例 (`src/cmd1.rs`)
 
 ```rust
-use tauri::{command, AppHandle, State, WebviewWindow};
-
-#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
-pub struct User {
-    pub id: u32,
-    pub name: String,
-}
+use tauri::command;
 
 #[command]
-pub fn greet(name: String) -> String {
-    format!("Hello, {}!", name)
-}
-
-#[command]
-pub fn get_user(id: u32) -> User {
-    User { id, name: "Test User".to_string() }
-}
-
-#[command]
-pub fn update_user(user: User, app_handle: AppHandle) -> Result<String, String> {
-    // app_handle は TypeScript 側では無視されます
-    Ok(format!("User {} updated.", user.name))
-}
-
-#[command]
-pub fn get_state(state: State<'_, String>) -> String {
-    // state は TypeScript 側では無視されます
-    state.inner().clone()
-}
-
-#[command]
-pub fn close_window(window: WebviewWindow) {
-    // window は TypeScript 側では無視されます
-    window.close().unwrap();
+pub fn command1() -> String {
+    "Command 1 executed".to_string()
 }
 ```
 
-### 生成されるTypeScriptの出力例 (`src/bindings/commands/Commands.ts`)
+### Rustの入力例 (`src/cmd2.rs`)
+
+```rust
+use tauri::command;
+
+#[command]
+pub fn command2() -> String {
+    "Command 2 executed".to_string()
+}
+```
+
+### 生成されるTypeScriptの出力例 (`src/bindings/commands/Cmd1.ts`)
 
 ```typescript
-// src/bindings/commands/Commands.ts
+// src/bindings/commands/Cmd1.ts
 
 import { invoke } from '@tauri-apps/api/tauri';
 
-export interface User {
-  id: number;
-  name: string;
-}
-
-export class Commands {
-  static async greet(name: string): Promise<string> {
-    return await invoke('greet', { name });
-  }
-
-  static async getUser(id: number): Promise<User> {
-    return await invoke('get_user', { id });
-  }
-
-  static async updateUser(user: User): Promise<string> {
-    return await invoke('update_user', { user });
-  }
-
-  static async getState(): Promise<string> {
-    return await invoke('get_state');
-  }
-
-  static async closeWindow(): Promise<void> {
-    return await invoke('close_window');
+export class Cmd1 {
+  static async command1(): Promise<string> {
+    return await invoke('command1');
   }
 }
 ```
 
-### 生成されるTypeScriptの出力例 (`src/bindings/types/User.ts`)
+### 生成されるTypeScriptの出力例 (出力ディレクトリ/interface/commands/Cmd1.ts)
 
 ```typescript
-// src/bindings/types/User.ts
-
-export interface User {
-  id: number;
-  name: string;
-}
-```
-
-### 生成されるJavaScriptの出力例 (`src/bindings/commands/Commands.js`)
-
-```javascript
-// src/bindings/commands/Commands.js
+// src/bindings/commands/Cmd2.ts
 
 import { invoke } from '@tauri-apps/api/tauri';
 
-export class Commands {
-  static async greet(name) {
-    return await invoke('greet', { name });
-  }
-
-  static async getUser(id) {
-    return await invoke('get_user', { id });
-  }
-
-  static async updateUser(user) {
-    return await invoke('update_user', { user });
-  }
-
-  static async getState() {
-    return await invoke('get_state');
-  }
-
-  static async closeWindow() {
-    return await invoke('close_window');
+export class Cmd2 {
+  static async command2(): Promise<string> {
+    return await invoke('command2');
   }
 }
 ```
@@ -204,20 +138,56 @@ export class Commands {
 ## 生成されるファイルのディレクトリ構成
 
 `tauria-tsgen` は、入力されたRustファイルのディレクトリ構造を維持した形でTypeScriptのファイルを生成します。
-例えば、`--input-path` に `./src-tauri/src`、`--output-path` に `./src/bindings` を指定した場合、以下のようなディレクトリ構成でファイルが生成されます。
+例えば、`--output-path` に `./src/bindings` を指定した場合、そのディレクトリの直下に以下のような構成でファイルが生成されます。
 
 ```
-./src/bindings/
-├───commands/
-│   └───Commands.ts
-├───types/
-│   └───User.ts
+./src/bindings/  <-- これは --output-path で指定したディレクトリ
+├───tauria-api/
+│   ├───Cmd1.ts
+│   ├───Cmd2.ts
+│   └───index.ts
+├───interface/
+│   ├───commands/
+│   │   ├───Cmd1.ts
+│   │   └───Cmd2.ts
+│   └───types/
+│       └───index.ts
 └───index.ts
 ```
 
-- `commands/`: `#[tauri::command]` が付与された関数を含むRustファイルに対応するTypeScriptのラッパー関数が生成されます。ファイル名はRustのモジュール名に基づいて決定されます。
-- `types/`: Rustの `struct` や `enum` などの型定義に対応するTypeScriptのインターフェースや型が生成されます。
+- `tauria-api/`: Tauriの `invoke` 関数を直接呼び出すラッパー関数が生成されます。
+- `interface/commands/`: `#[tauri::command]` が付与された関数に対応するTypeScriptのインターフェースが生成されます。ファイル名はRustのモジュール名に基づいて決定されます。
+- `interface/types/`: Rustの `struct` や `enum` などの型定義に対応するTypeScriptのインターフェースや型が生成されます。
 - `index.ts`: 生成されたすべてのコマンドと型をエクスポートするエントリポイントファイルです。
+
+### 生成されたAPIの使用例
+
+`tauria-tsgen` によって生成されたTauriコマンドのラッパーは、ファクトリ関数を通じてインスタンス化され、型安全な方法でRustのコマンドを呼び出すことができます。
+
+#### TypeScriptでの使用例
+
+```typescript
+import { createCmd } from './src/bindings/tauria-api'; // 出力パスに合わせて調整
+
+async function callTauriCommands() {
+  const cmdApi = createCmd(); // Cmdクラスのインスタンスを生成
+
+  try {
+    // Rustのget_user_dataコマンドを呼び出す
+    const result = await cmdApi.command1();
+    console.log('コマンド1の結果:', result);
+
+    // 他のコマンドも同様に呼び出し可能
+    // const result = await cmdApi.some_other_command();
+    // console.log('他のコマンドの結果:', result);
+
+  } catch (error) {
+    console.error('Tauriコマンドの呼び出し中にエラーが発生しました:', error);
+  }
+}
+
+callTauriCommands();
+```
 
 ## 開発者向け情報
 
