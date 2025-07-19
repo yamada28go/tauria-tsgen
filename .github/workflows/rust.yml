@@ -72,21 +72,21 @@ jobs:
         run: cargo test --target ${{ matrix.target }} --verbose
 
       - name: Build
-        run: cargo build --target ${{ matrix.target }} --verbose
+        run: cargo build --release --target ${{ matrix.target }} --verbose
 
       - name: Upload artifact (Unix)
         if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: tauria-tsgen-${{ matrix.target }}
-          path: target/${{ matrix.target }}/debug/tauria-tsgen
+          path: target/${{ matrix.target }}/release/tauria-tsgen
 
       - name: Upload artifact (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
           name: tauria-tsgen-${{ matrix.target }}
-          path: target/${{ matrix.target }}/debug/tauria-tsgen.exe
+          path: target/${{ matrix.target }}/release/tauria-tsgen.exe
 
   release:
     name: Create Release
@@ -103,7 +103,7 @@ jobs:
           path: artifacts
 
       - name: List downloaded artifacts
-        run: ls -R artifacts # ダウンロードされた成果物の内容を再帰的に表示
+        run: ls -R artifacts
 
       - name: Get project version from tag
         id: get_version_from_tag
@@ -120,10 +120,10 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/tauria-tsgen-x86_64-unknown-linux-gnu/tauria-tsgen:tauria-tsgen-linux-x86_64
-            artifacts/tauria-tsgen-x86_64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-x86_64
-            artifacts/tauria-tsgen-aarch64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-aarch64
-            artifacts/tauria-tsgen-x86_64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-x86_64.exe
-            artifacts/tauria-tsgen-aarch64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-aarch64.exe
+            artifacts/tauria-tsgen-x86_64-unknown-linux-gnu/tauria-tsgen:tauria-tsgen-linux-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
+            artifacts/tauria-tsgen-x86_64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
+            artifacts/tauria-tsgen-aarch64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-aarch64-v${{ steps.get_version_from_tag.outputs.version }}
+            artifacts/tauria-tsgen-x86_64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-x86_64-v${{ steps.get_version_from_tag.outputs.version }}.exe
+            artifacts/tauria-tsgen-aarch64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-aarch64-v${{ steps.get_version_from_tag.outputs.version }}.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
