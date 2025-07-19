@@ -102,6 +102,9 @@ jobs:
         with:
           path: artifacts
 
+      - name: List downloaded artifacts
+        run: ls -R artifacts # ダウンロードされた成果物の内容を再帰的に表示
+
       - name: Get project version from tag
         id: get_version_from_tag
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
