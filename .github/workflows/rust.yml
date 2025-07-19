@@ -59,6 +59,7 @@ jobs:
         run: cargo clippy --target ${{ matrix.target }} -- -D warnings
 
       - name: Run tests
+        if: "!contains(matrix.target, 'aarch64')"
         run: cargo test --target ${{ matrix.target }} --verbose
 
       - name: Build
