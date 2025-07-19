@@ -105,6 +105,14 @@ jobs:
       - name: List downloaded artifacts
         run: ls -R artifacts
 
+      - name: Move artifacts to root
+        run: |
+          mv artifacts/tauria-tsgen-x86_64-unknown-linux-gnu/tauria-tsgen tauria-tsgen-linux-x86_64
+          mv artifacts/tauria-tsgen-x86_64-apple-darwin/tauria-tsgen tauria-tsgen-macos-x86_64
+          mv artifacts/tauria-tsgen-aarch64-apple-darwin/tauria-tsgen tauria-tsgen-macos-aarch64
+          mv artifacts/tauria-tsgen-x86_64-pc-windows-msvc/tauria-tsgen.exe tauria-tsgen-windows-x86_64.exe
+          mv artifacts/tauria-tsgen-aarch64-pc-windows-msvc/tauria-tsgen.exe tauria-tsgen-windows-aarch64.exe
+
       - name: Get project version from tag
         id: get_version_from_tag
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
@@ -120,10 +128,10 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            artifacts/tauria-tsgen-x86_64-unknown-linux-gnu/tauria-tsgen:tauria-tsgen-linux-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
-            artifacts/tauria-tsgen-x86_64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
-            artifacts/tauria-tsgen-aarch64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-aarch64-v${{ steps.get_version_from_tag.outputs.version }}
-            artifacts/tauria-tsgen-x86_64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-x86_64-v${{ steps.get_version_from_tag.outputs.version }}.exe
-            artifacts/tauria-tsgen-aarch64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-aarch64-v${{ steps.get_version_from_tag.outputs.version }}.exe
+            tauria-tsgen-linux-x86_64:tauria-tsgen-linux-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
+            tauria-tsgen-macos-x86_64:tauria-tsgen-macos-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
+            tauria-tsgen-macos-aarch64:tauria-tsgen-macos-aarch64-v${{ steps.get_version_from_tag.outputs.version }}
+            tauria-tsgen-windows-x86_64.exe:tauria-tsgen-windows-x86_64-v${{ steps.get_version_from_tag.outputs.version }}.exe
+            tauria-tsgen-windows-aarch64.exe:tauria-tsgen-windows-aarch64-v${{ steps.get_version_from_tag.outputs.version }}.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
