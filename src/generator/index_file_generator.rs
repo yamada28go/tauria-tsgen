@@ -310,16 +310,8 @@ export interface TypeB {
 
 "#;
         assert_eq!(
-            types_index_content.trim().replace(
-                "
-", "
-"
-            ),
-            expected_content.trim().replace(
-                "
-", "
-"
-            )
+            types_index_content.trim().replace("\r\n", "\n"),
+            expected_content.trim().replace("\r\n", "\n")
         );
     }
 
@@ -389,8 +381,8 @@ export interface TypeB {
         // interface/index.ts のソート順を確認
         let expected_interface_content = "export * from \"./commands/AFile\";\nexport * from \"./commands/MFile\";\nexport * from \"./commands/ZFile\";";
         assert_eq!(
-            interface_index_content.trim(),
-            expected_interface_content.trim(),
+            interface_index_content.trim().replace("\r\n", "\n"),
+            expected_interface_content.trim().replace("\r\n", "\n"),
             "interface/index.ts のソート順が不正です"
         );
 
@@ -398,8 +390,8 @@ export interface TypeB {
         let expected_tauri_api_content =
             "export * from \"./AFile\";\nexport * from \"./MFile\";\nexport * from \"./ZFile\";";
         assert_eq!(
-            tauri_api_index_content.trim(),
-            expected_tauri_api_content.trim(),
+            tauri_api_index_content.trim().replace("\r\n", "\n"),
+            expected_tauri_api_content.trim().replace("\r\n", "\n"),
             "tauria-api/index.ts のソート順が不正です"
         );
 
@@ -407,8 +399,8 @@ export interface TypeB {
         let expected_mock_api_content =
             "export * from \"./AFile\";\nexport * from \"./MFile\";\nexport * from \"./ZFile\";";
         assert_eq!(
-            mock_api_index_content.trim(),
-            expected_mock_api_content.trim(),
+            mock_api_index_content.trim().replace("\r\n", "\n"),
+            expected_mock_api_content.trim().replace("\r\n", "\n"),
             "mock-api/index.ts のソート順が不正です"
         );
     }
