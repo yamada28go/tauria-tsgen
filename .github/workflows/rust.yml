@@ -165,8 +165,7 @@ jobs:
 
       - name: Update package.json version
         run: |
-          cd npm
-          npm version ${{ steps.get_version_from_tag.outputs.version }} --no-git-tag-version
+          sed -i 's/"version": ".*"/"version": "${{ steps.get_version_from_tag.outputs.version }}"/' npm/package.json
 
       - name: Install npm dependencies and download binary
         run: |
