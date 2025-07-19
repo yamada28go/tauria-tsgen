@@ -34,6 +34,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Get project version
+        id: get_version
+        uses: cargo-get-version-action@v1
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
@@ -64,3 +68,17 @@ jobs:
 
       - name: Build
         run: cargo build --target ${{ matrix.target }} --verbose
+
+      - name: Upload artifact (Unix)
+        if: runner.os != 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauria-tsgen-v${{ steps.get_version.outputs.version }}-${{ matrix.target }}
+          path: target/${{ matrix.target }}/debug/tauria-tsgen
+
+      - name: Upload artifact (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tauria-tsgen-v${{ steps.get_version.outputs.version }}-${{ matrix.target }}
+          path: target/${{ matrix.target }}/debug/tauria-tsgen.exe
