@@ -133,10 +133,10 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            tauria-tsgen-linux-x86_64:tauria-tsgen-linux-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
-            tauria-tsgen-macos-x86_64:tauria-tsgen-macos-x86_64-v${{ steps.get_version_from_tag.outputs.version }}
-            tauria-tsgen-macos-aarch64:tauria-tsgen-macos-aarch64-v${{ steps.get_version_from_tag.outputs.version }}
-            tauria-tsgen-windows-x86_64.exe:tauria-tsgen-windows-x86_64-v${{ steps.get_version_from_tag.outputs.version }}.exe
-            tauria-tsgen-windows-aarch64.exe:tauria-tsgen-windows-aarch64-v${{ steps.get_version_from_tag.outputs.version }}.exe
+            tauria-tsgen-linux-x86_64
+            tauria-tsgen-macos-x86_64
+            tauria-tsgen-macos-aarch64
+            tauria-tsgen-windows-x86_64.exe
+            tauria-tsgen-windows-aarch64.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
