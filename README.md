@@ -23,18 +23,6 @@
     -   Outputs TypeScript functions in a way that preserves the Rust directory structure.
     -   Each TypeScript class is planned to have a feature that allows loading JSON data for mock behavior.
 
-## Tech Stack
-
--   **Rust**
-    -   `clap`: Command-line argument parsing
-    -   `serde`, `serde_json`: Configuration file reading
-    -   `syn`, `quote`: Rust code parsing and code generation
-    -   `log`, `env_logger`: Logging
-    -   `tera`: Template engine
-    -   `anyhow`: Error handling
-    -   `convert_case`: Case conversion
-    -   `rust-embed`: Embedding template files
-
 ## Usage
 
 ### Displaying Version Information
@@ -96,6 +84,142 @@ RUST_LOG=info cargo run -- -c config.json
 ```
 
 Available log levels: `error`, `warn`, `info`, `debug`, `trace`
+
+## Input and Output Examples
+
+### Rust Input Example (`src/commands.rs`)
+
+```rust
+use tauri::{command, AppHandle, State, WebviewWindow};
+
+#[derive(serde::Serialize, serde::Deserialize, Debug, Clone)]
+pub struct User {
+    pub id: u32,
+    pub name: String,
+}
+
+#[command]
+pub fn greet(name: String) -> String {
+    format!("Hello, {}!", name)
+}
+
+#[command]
+pub fn get_user(id: u32) -> User {
+    User { id, name: "Test User".to_string() }
+}
+
+#[command]
+pub fn update_user(user: User, app_handle: AppHandle) -> Result<String, String> {
+    // app_handle is ignored on the TypeScript side
+    Ok(format!("User {} updated.", user.name))
+}
+
+#[command]
+pub fn get_state(state: State<'_, String>) -> String {
+    // state is ignored on the TypeScript side
+    state.inner().clone()
+}
+
+#[command]
+pub fn close_window(window: WebviewWindow) {
+    // window is ignored on the TypeScript side
+    window.close().unwrap();
+}
+```
+
+### Generated TypeScript Output Example (`src/bindings/commands/Commands.ts`)
+
+```typescript
+// src/bindings/commands/Commands.ts
+
+import { invoke } from '@tauri-apps/api/tauri';
+
+export interface User {
+  id: number;
+  name: string;
+}
+
+export class Commands {
+  static async greet(name: string): Promise<string> {
+    return await invoke('greet', { name });
+  }
+
+  static async getUser(id: number): Promise<User> {
+    return await invoke('get_user', { id });
+  }
+
+  static async updateUser(user: User): Promise<string> {
+    return await invoke('update_user', { user });
+  }
+
+  static async getState(): Promise<string> {
+    return await invoke('get_state');
+  }
+
+  static async closeWindow(): Promise<void> {
+    return await invoke('close_window');
+  }
+}
+```
+
+### Generated TypeScript Output Example (`src/bindings/types/User.ts`)
+
+```typescript
+// src/bindings/types/User.ts
+
+export interface User {
+  id: number;
+  name: string;
+}
+```
+
+### Generated JavaScript Output Example (`src/bindings/commands/Commands.js`)
+
+```javascript
+// src/bindings/commands/Commands.js
+
+import { invoke } from '@tauri-apps/api/tauri';
+
+export class Commands {
+  static async greet(name) {
+    return await invoke('greet', { name });
+  }
+
+  static async getUser(id) {
+    return await invoke('get_user', { id });
+  }
+
+  static async updateUser(user) {
+    return await invoke('update_user', { user });
+  }
+
+  static async getState() {
+    return await invoke('get_state');
+  }
+
+  static async closeWindow() {
+    return await invoke('close_window');
+  }
+}
+```
+
+## Generated File Directory Structure
+
+`tauria-tsgen` generates TypeScript files while maintaining the directory structure of the input Rust files.
+For example, if you specify `./src-tauri/src` for `--input-path` and `./src/bindings` for `--output-path`, files will be generated with the following directory structure:
+
+```
+./src/bindings/
+├───commands/
+│   └───Commands.ts
+├───types/
+│   └───User.ts
+└───index.ts
+```
+
+- `commands/`: TypeScript wrapper functions corresponding to Rust files with `#[tauri::command]` are generated. The file names are determined based on the Rust module names.
+- `types/`: TypeScript interfaces and types corresponding to Rust `struct`s, `enum`s, etc., are generated.
+- `index.ts`: This is an entry point file that exports all generated commands and types.
 
 ## For Developers
 
