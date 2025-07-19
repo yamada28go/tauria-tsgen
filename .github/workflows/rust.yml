@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
-      contents: write # リリース作成のために必要
+      contents: write
 
     steps:
       - name: Download all artifacts
@@ -116,6 +116,11 @@ jobs:
             See [CHANGELOG.md](CHANGELOG.md) for details.
           draft: false
           prerelease: false
-          files: artifacts/**/*
+          files: |
+            artifacts/tauria-tsgen-x86_64-unknown-linux-gnu/tauria-tsgen:tauria-tsgen-linux-x86_64
+            artifacts/tauria-tsgen-x86_64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-x86_64
+            artifacts/tauria-tsgen-aarch64-apple-darwin/tauria-tsgen:tauria-tsgen-macos-aarch64
+            artifacts/tauria-tsgen-x86_64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-x86_64.exe
+            artifacts/tauria-tsgen-aarch64-pc-windows-msvc/tauria-tsgen.exe:tauria-tsgen-windows-aarch64.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
