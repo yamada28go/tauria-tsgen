@@ -3,6 +3,8 @@ name: Rust
 on:
   push:
     branches: [ "main" ]
+    tags:
+      - 'v*' # vで始まるタグがプッシュされたときにトリガー
   pull_request:
     branches: [ "main" ]
 
@@ -76,12 +78,44 @@ jobs:
         if: runner.os != 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: tauria-tsgen-v${{ steps.get_version.outputs.version }}-${{ matrix.target }}
+          name: tauria-tsgen-${{ matrix.target }}
           path: target/${{ matrix.target }}/debug/tauria-tsgen
 
       - name: Upload artifact (Windows)
         if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: tauria-tsgen-v${{ steps.get_version.outputs.version }}-${{ matrix.target }}
+          name: tauria-tsgen-${{ matrix.target }}
           path: target/${{ matrix.target }}/debug/tauria-tsgen.exe
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write # リリース作成のために必要
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Get project version from tag
+        id: get_version_from_tag
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref }}
+          name: Release ${{ github.ref }}
+          body: |
+            Automated release for version ${{ steps.get_version_from_tag.outputs.version }}
+            See [CHANGELOG.md](CHANGELOG.md) for details.
+          draft: false
+          prerelease: false
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
