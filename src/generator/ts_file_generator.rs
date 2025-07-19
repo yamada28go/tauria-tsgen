@@ -227,13 +227,13 @@ mod tests {
 
         // 比較
         assert_eq!(
-            generated_interface.trim(),
-            expected_interface.trim(),
+            generated_interface.trim().replace("\r\n", "\n"),
+            expected_interface.trim().replace("\r\n", "\n"),
             "インターフェースファイルの内容が一致しません"
         );
         assert_eq!(
-            generated_tauri_api.trim(),
-            expected_tauri_api.trim(),
+            generated_tauri_api.trim().replace("\r\n", "\n"),
+            expected_tauri_api.trim().replace("\r\n", "\n"),
             "Tauri APIファイルの内容が一致しません"
         );
 

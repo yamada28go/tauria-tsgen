@@ -882,8 +882,8 @@ mod tests {
         if let Item::Fn(func) = parsed_item {
             let doc_comment = extract_doc_comments(&func.attrs);
             assert_eq!(
-                doc_comment,
-                "This is a doc comment.\n# Arguments\n* `arg1` - The first argument.\n* `arg1` - The first argument.\n# Returns\nThe result."
+                doc_comment.replace("\r\n", "\n"),
+                "This is a doc comment.\n# Arguments\n* `arg1` - The first argument.\n* `arg1` - The first argument.\n# Returns\nThe result.".replace("\r\n", "\n")
             );
         } else {
             panic!("Expected a function");

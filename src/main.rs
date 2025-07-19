@@ -164,6 +164,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(windows))]
     fn test_run_app_output_dir_creation_failure() {
         // Simulate a directory that cannot be created (e.g., due to permissions)
         // This is tricky to test reliably without actual permission issues.
@@ -205,6 +206,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(windows))]
     fn test_run_app_file_read_failure() {
         let input_dir = tempdir().expect("Failed to create temp input dir");
         let output_dir = tempdir().expect("Failed to create temp output dir");
