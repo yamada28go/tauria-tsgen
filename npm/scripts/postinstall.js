@@ -129,6 +129,21 @@ async function setExecutablePermissions() {
   }
 }
 
+function createBinSymlink() {
+  // __dirname = .../node_modules/tauria-tsgen/scripts
+  const pkgRoot   = path.resolve(__dirname, '..');            // .../node_modules/tauria-tsgen
+  const nmDir     = path.resolve(pkgRoot, '..');              // .../node_modules
+  const linkDir   = path.join(nmDir, '.bin');                 // .../node_modules/.bin
+  const targetBin = path.join(pkgRoot, 'bin', packageName + (platform === 'win32' ? '.exe' : ''));
+  const linkPath  = path.join(linkDir, packageName);
+
+  if (!fs.existsSync(linkDir)) fs.mkdirSync(linkDir, { recursive: true });
+  if (fs.existsSync(linkPath)) fs.unlinkSync(linkPath);
+
+  fs.symlinkSync(targetBin, linkPath, 'file');
+  console.log(`Linked: ${linkPath} → ${targetBin}`);
+}
+
 async function main() {
   try {
     const nodeFetchModule = await import('node-fetch');
@@ -140,8 +155,15 @@ async function main() {
     process.exit(1);
   }
 
-  await downloadBinary();
-  await setExecutablePermissions();
+  try {
+    await downloadBinary();
+    await setExecutablePermissions();
+    createBinSymlink();
+    console.log('✅ postinstall 完了');
+  } catch (err) {
+    console.error('postinstall エラー:', err);
+    process.exit(1);
+  }
 }
 
 main();
