@@ -9,18 +9,18 @@ export interface IWebviewWindow {
 
     /**
 **/
-    test_webview_window(): Promise<string>;
+    testWebviewWindow(): Promise<string>;
 
     /**
 **/
-    test_webview_window2(name: string): Promise<string>;
+    testWebviewWindow2(name: string): Promise<string>;
 
     /**
 **/
-    test_webview_window3(name: string): Promise<string>;
+    testWebviewWindow3(name: string): Promise<string>;
 
     /**
 **/
-    test_webview_window4(name: string): Promise<string>;
+    testWebviewWindow4(name: string): Promise<string>;
 
 }

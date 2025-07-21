@@ -9,18 +9,18 @@ export interface IAppHandle {
 
     /**
 **/
-    test_app_handle(): Promise<string>;
+    testAppHandle(): Promise<string>;
 
     /**
 **/
-    test_app_handle2(name: string): Promise<string>;
+    testAppHandle2(name: string): Promise<string>;
 
     /**
 **/
-    test_app_handle3(name: string): Promise<string>;
+    testAppHandle3(name: string): Promise<string>;
 
     /**
 **/
-    test_app_handle4(name: string): Promise<string>;
+    testAppHandle4(name: string): Promise<string>;
 
 }

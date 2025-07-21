@@ -9,10 +9,10 @@ export interface IResponse {
 
     /**
 **/
-    read_file1(): Promise<unknown>;
+    readFile1(): Promise<unknown>;
 
     /**
 **/
-    read_file2(): Promise<unknown>;
+    readFile2(): Promise<unknown>;
 
 }

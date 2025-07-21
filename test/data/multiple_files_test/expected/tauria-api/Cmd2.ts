@@ -20,7 +20,7 @@ class Cmd2 implements T.ICmd2 {
 * 商品情報を取得するTauriコマンド**
      * # 引数* * `product_id` - 商品の識別子**
      * # 戻り値* 指定された商品IDに対応する商品情報（ダミーデータ）*/
-    async get_product_data(product_id: string): Promise<T.Product> {
+    async getProductData(product_id: string): Promise<T.Product> {
         return await invoke('get_product_data', { product_id: product_id });
     }
     

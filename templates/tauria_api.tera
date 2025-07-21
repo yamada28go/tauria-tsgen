@@ -28,7 +28,7 @@ class {{ class_name }} implements T.I{{ class_name }} {
 {%- endif -%}
 {% endfor -%}
      */
-    async {{ func.name }}({{ func.args | join(sep = ", ") }}): Promise<{{ func.return_type }}> {
+    async {{ func.name | camelcase }}({{ func.args | join(sep = ", ") }}): Promise<{{ func.return_type }}> {
         return await invoke('{{ func.name }}', { {{ func.invoke_args | join(sep = ", ") }} });
     }
     {% endfor %}

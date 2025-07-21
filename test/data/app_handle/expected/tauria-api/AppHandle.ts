@@ -18,25 +18,25 @@ class AppHandle implements T.IAppHandle {
     
     /**
 **/
-    async test_app_handle(): Promise<string> {
+    async testAppHandle(): Promise<string> {
         return await invoke('test_app_handle', {  });
     }
     
     /**
 **/
-    async test_app_handle2(name: string): Promise<string> {
+    async testAppHandle2(name: string): Promise<string> {
         return await invoke('test_app_handle2', { name: name });
     }
     
     /**
 **/
-    async test_app_handle3(name: string): Promise<string> {
+    async testAppHandle3(name: string): Promise<string> {
         return await invoke('test_app_handle3', { name: name });
     }
     
     /**
 **/
-    async test_app_handle4(name: string): Promise<string> {
+    async testAppHandle4(name: string): Promise<string> {
         return await invoke('test_app_handle4', { name: name });
     }
     

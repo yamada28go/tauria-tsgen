@@ -18,25 +18,25 @@ class WebviewWindow implements T.IWebviewWindow {
     
     /**
 **/
-    async test_webview_window(): Promise<string> {
+    async testWebviewWindow(): Promise<string> {
         return await invoke('test_webview_window', {  });
     }
     
     /**
 **/
-    async test_webview_window2(name: string): Promise<string> {
+    async testWebviewWindow2(name: string): Promise<string> {
         return await invoke('test_webview_window2', { name: name });
     }
     
     /**
 **/
-    async test_webview_window3(name: string): Promise<string> {
+    async testWebviewWindow3(name: string): Promise<string> {
         return await invoke('test_webview_window3', { name: name });
     }
     
     /**
 **/
-    async test_webview_window4(name: string): Promise<string> {
+    async testWebviewWindow4(name: string): Promise<string> {
         return await invoke('test_webview_window4', { name: name });
     }
     

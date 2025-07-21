@@ -85,7 +85,7 @@ fn run_app(cli: Cli) -> anyhow::Result<()> {
 
     generate_user_types_index_file(&output_dir, &all_ts_interfaces)?;
 
-    generate_index_files(&output_dir, &mut file_names, cli.mock_api)?;
+    generate_index_files(&output_dir, &mut file_names, cli.mock_api, &all_global_events, &all_window_events)?;
 
     info!("✅ Tauri wrapper generation completed.");
     Ok(())

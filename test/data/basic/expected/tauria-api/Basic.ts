@@ -30,13 +30,13 @@ class Basic implements T.IBasic {
     
     /**
 * * @brief Gets a user by ID.* * @param id The ID of the user.* * @returns The user with the specified ID.*/
-    async get_user(id: number): Promise<string> {
+    async getUser(id: number): Promise<string> {
         return await invoke('get_user', { id: id });
     }
     
     /**
 * * @brief Updates a user.* * @param user_name The name of the user to update.* * @returns A message indicating the user has been updated.*/
-    async update_user(user_name: string): Promise<string> {
+    async updateUser(user_name: string): Promise<string> {
         return await invoke('update_user', { user_name: user_name });
     }
     

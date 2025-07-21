@@ -20,7 +20,7 @@ class StructTest implements T.IStructTest {
 * ユーザー情報を取得するTauriコマンド**
      * # 引数* * `id` - ユーザーのID**
      * # 戻り値* 指定されたIDに対応するユーザー情報（ダミーデータ）*/
-    async get_user_data(id: number): Promise<T.User> {
+    async getUserData(id: number): Promise<T.User> {
         return await invoke('get_user_data', { id: id });
     }
     
@@ -28,7 +28,7 @@ class StructTest implements T.IStructTest {
 * 商品情報を取得するTauriコマンド**
      * # 引数* * `product_id` - 商品の識別子**
      * # 戻り値* 指定された商品IDに対応する商品情報（ダミーデータ）*/
-    async get_product_data(product_id: string): Promise<T.Product> {
+    async getProductData(product_id: string): Promise<T.Product> {
         return await invoke('get_product_data', { product_id: product_id });
     }
     

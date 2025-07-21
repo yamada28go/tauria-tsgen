@@ -4,28 +4,22 @@
 // Manually modifying it may break the interface and lead to unintended consequences. 
 // Please exercise great caution if you choose to make manual changes.
 //
-// target file : response.rs
+// target file : event_test.rs
 
 
 import { invoke } from '@tauri-apps/api/core';
 import * as T from '../interface/';
 
 // tauri command interface class 
-// target file : response.rs
-class Response implements T.IResponse {
+// target file : event_test.rs
+class EventTest implements T.IEventTest {
 
     //#region #tauri command
     
     /**
 **/
-    async readFile1(): Promise<unknown> {
-        return await invoke('read_file1', {  });
-    }
-    
-    /**
-**/
-    async readFile2(): Promise<unknown> {
-        return await invoke('read_file2', {  });
+    async eventTestCommand(): Promise<void> {
+        return await invoke('event_test_command', {  });
     }
     
     //#endregion
@@ -34,14 +28,14 @@ class Response implements T.IResponse {
     //#region #endregion
     private constructor() {}
 
-    static create(): T.IResponse  {
-        return new Response();
+    static create(): T.IEventTest  {
+        return new EventTest();
     }
     //#endregion
 
 }
 
 // factory function
-export function createResponse(): T.IResponse {
-    return Response.create();
+export function createEventTest(): T.IEventTest {
+    return EventTest.create();
 }

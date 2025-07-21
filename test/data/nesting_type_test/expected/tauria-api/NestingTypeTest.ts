@@ -18,7 +18,7 @@ class NestingTypeTest implements T.INestingTypeTest {
     
     /**
 * * @brief Processes a given message.* * @param msg The message to process.* * @returns A string indicating the processed message.*/
-    async process_message(msg: T.Data): Promise<string> {
+    async processMessage(msg: T.Data): Promise<string> {
         return await invoke('process_message', { msg: msg });
     }
     

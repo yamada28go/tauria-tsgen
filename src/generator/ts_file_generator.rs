@@ -9,12 +9,46 @@ use tera::{Context, Tera};
 #[folder = "templates/"]
 pub struct Asset;
 
+pub fn register_tera_filters(tera: &mut Tera) {
+    use convert_case::{Case, Casing};
+    tera.register_filter(
+        "camelcase",
+        move |value: &tera::Value, _: &std::collections::HashMap<String, tera::Value>| {
+            let s = match value.as_str() {
+                Some(s) => s,
+                None => {
+                    return Err(tera::Error::msg(
+                        "camelcase filter can only be used on strings",
+                    ));
+                }
+            };
+            Ok(tera::Value::String(s.to_case(Case::Camel)))
+        },
+    );
+    tera.register_filter(
+        "pascalcase",
+        move |value: &tera::Value, _: &std::collections::HashMap<String, tera::Value>| {
+            let s = match value.as_str() {
+                Some(s) => s,
+                None => {
+                    return Err(tera::Error::msg(
+                        "pascalcase filter can only be used on strings",
+                    ));
+                }
+            };
+            Ok(tera::Value::String(s.to_case(Case::Pascal)))
+        },
+    );
+}
+
 pub fn generate_event_handler_files(
     output_dir: &Path,
     global_events: &[crate::generator::type_extractor::EventInfo],
     window_events: &[crate::generator::type_extractor::WindowEventInfo],
 ) -> anyhow::Result<()> {
+    use convert_case::{Case, Casing};
     let mut tera = Tera::default();
+    register_tera_filters(&mut tera);
     tera.add_raw_template(
         "global_event_handler.tera",
         std::str::from_utf8(
@@ -34,25 +68,13 @@ pub fn generate_event_handler_files(
         )?,
     )?;
     tera.autoescape_on(vec![]);
-    use convert_case::{Case, Casing};
-    tera.register_filter(
-        "pascalcase",
-        move |value: &tera::Value, _: &std::collections::HashMap<String, tera::Value>| {
-            let s = match value.as_str() {
-                Some(s) => s,
-                None => {
-                    return Err(tera::Error::msg(
-                        "pascalcase filter can only be used on strings",
-                    ));
-                }
-            };
-            Ok(tera::Value::String(s.to_case(Case::Pascal)))
-        },
-    );
 
     let interface_dir = output_dir.join("interface");
+    let tauri_api_dir = output_dir.join("tauria-api");
     let events_dir = interface_dir.join("events");
+
     std::fs::create_dir_all(&events_dir)?;
+    std::fs::create_dir_all(&tauri_api_dir)?;
 
     if !global_events.is_empty() {
         let mut context = Context::new();
@@ -62,8 +84,10 @@ pub fn generate_event_handler_files(
         }
         let unique_global_events: Vec<_> = unique_events.values().cloned().collect();
         context.insert("global_events", &unique_global_events);
-        let rendered = tera.render("global_event_handler.tera", &context)?;
-        std::fs::write(events_dir.join("GlobalEventHandlers.ts"), rendered)?;
+
+        // GlobalEventHandlers.ts の生成
+        let rendered = tera.render("global_event_handler.tera", &context).unwrap();
+        std::fs::write(tauri_api_dir.join("GlobalEventHandlers.ts"), rendered)?;
     }
 
     if !window_events.is_empty() {
@@ -81,9 +105,9 @@ pub fn generate_event_handler_files(
         for (window_name, events_map) in window_events_map {
             let mut context = Context::new();
             let unique_events: Vec<_> = events_map.values().cloned().collect();
-            context.insert("window_name", &window_events);
+            context.insert("window_name", &window_name);
             context.insert("events", &unique_events);
-            let rendered = tera.render("window_event_handler.tera", &context)?;
+            let rendered = tera.render("window_event_handler.tera", &context).unwrap();
             let pascal_case_window_name = window_name.to_case(Case::Pascal);
             std::fs::write(
                 events_dir.join(format!("{pascal_case_window_name}WindowEventHandlers.ts")),
@@ -122,6 +146,7 @@ pub fn generate_ts_files(
     Vec<crate::generator::type_extractor::WindowEventInfo>,
 )> {
     let mut tera = Tera::default();
+    register_tera_filters(&mut tera);
     // テンプレートの読み込み
     tera.add_raw_template(
         "command_interfaces.tera",
@@ -140,22 +165,6 @@ pub fn generate_ts_files(
         std::str::from_utf8(Asset::get("user_types.tera").unwrap().data.as_ref())?,
     )?;
     tera.autoescape_on(vec![]);
-
-    use convert_case::{Case, Casing};
-    tera.register_filter(
-        "pascalcase",
-        move |value: &tera::Value, _: &std::collections::HashMap<String, tera::Value>| {
-            let s = match value.as_str() {
-                Some(s) => s,
-                None => {
-                    return Err(tera::Error::msg(
-                        "pascalcase filter can only be used on strings",
-                    ));
-                }
-            };
-            Ok(tera::Value::String(s.to_case(Case::Pascal)))
-        },
-    );
 
     let syntax = syn::parse_file(rust_code)?;
 
@@ -285,63 +294,70 @@ mod tests {
         }
 
         if has_command {
-            // 生成されたファイルの内容を読み込み、期待される内容と比較
-            let generated_interface_path = output_dir
-                .join("interface")
-                .join("commands")
-                .join(format!("{}.ts", pascal_case_file_name));
-            let generated_tauri_api_path = output_dir
-                .join("tauria-api")
-                .join(format!("{}.ts", pascal_case_file_name));
-            #[allow(unused_variables)]
-            let _generated_mock_api_path = output_dir
-                .join("mock-api")
-                .join(format!("{}.ts", pascal_case_file_name));
-
-            #[allow(unused_variables)]
-            let generated_interface = fs::read_to_string(&generated_interface_path)
-                .expect("生成されたインターフェースファイルが読み込めません");
-            #[allow(unused_variables)]
-            let generated_tauri_api = fs::read_to_string(&generated_tauri_api_path)
-                .expect("生成されたTauri APIファイルが読み込めません");
-
-            // 期待されるファイルの内容を読み込み
-
-            // 期待されるファイルの内容を読み込み
-            let expected_interface_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("test/data")
-                .join(test_case_name)
-                .join("expected")
-                .join("interface")
-                .join("commands")
-                .join(format!("{}.ts", pascal_case_file_name));
-            let expected_tauri_api_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-                .join("test/data")
-                .join(test_case_name)
-                .join("expected")
-                .join("tauria-api")
-                .join(format!("{}.ts", pascal_case_file_name));
-
-            let expected_interface = fs::read_to_string(&expected_interface_path)
-                .expect("期待されるインターフェースファイルが読み込めません");
-            let expected_tauri_api = fs::read_to_string(&expected_tauri_api_path)
-                .expect("期待されるTauri APIファイルが読み込めません");
-
-            // 比較
-            assert_eq!(
-                generated_interface.trim().replace("\r\n", "\n"),
-                expected_interface.trim().replace("\r\n", "\n"),
-                "インターフェースファイルの内容が一致しません"
+            // コマンド関連ファイルの比較
+            compare_generated_files(
+                &output_dir,
+                test_case_name,
+                &format!("interface/commands/{}.ts", pascal_case_file_name),
             );
-            assert_eq!(
-                generated_tauri_api.trim().replace("\r\n", "\n"),
-                expected_tauri_api.trim().replace("\r\n", "\n"),
-                "Tauri APIファイルの内容が一致しません"
+            compare_generated_files(
+                &output_dir,
+                test_case_name,
+                &format!("tauria-api/{}.ts", pascal_case_file_name),
             );
+        }
+
+        if !global_events.is_empty() {
+            // グローバルイベントハンドラファイルの比較
+            compare_generated_files(
+                &output_dir,
+                test_case_name,
+                "interface/events/GlobalEventHandlers.ts",
+            );
+        }
+
+        if !window_events.is_empty() {
+            // ウィンドウイベントハンドラファイルの比較
+            let mut window_names: Vec<_> = window_events.iter().map(|e| e.window_name.clone()).collect();
+            window_names.sort();
+            window_names.dedup();
+
+            for window_name in window_names {
+                let pascal_case_window_name = window_name.to_case(Case::Pascal);
+                compare_generated_files(
+                    &output_dir,
+                    test_case_name,
+                    &format!(
+                        "interface/events/{}WindowEventHandlers.ts",
+                        pascal_case_window_name
+                    ),
+                );
+            }
         }
 
         // mock-api ディレクトリとファイルが存在しないことを確認
         assert!(!output_dir.join("mock-api").exists());
+    }
+
+    fn compare_generated_files(output_dir: &Path, test_case_name: &str, file_path: &str) {
+        let generated_path = output_dir.join(file_path);
+        let expected_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("test/data")
+            .join(test_case_name)
+            .join("expected")
+            .join(file_path);
+
+        let generated_content = fs::read_to_string(&generated_path)
+            .unwrap_or_else(|_| panic!("生成されたファイルが読み込めません: {:?}", generated_path));
+        let expected_content = fs::read_to_string(&expected_path)
+            .unwrap_or_else(|_| panic!("期待されるファイルが読み込めません: {:?}", expected_path));
+
+        assert_eq!(
+            generated_content.trim().replace("\r\n", "\n"),
+            expected_content.trim().replace("\r\n", "\n"),
+            "ファイルの内容が一致しません: {}",
+            file_path
+        );
     }
 
     #[test]
@@ -387,5 +403,10 @@ mod tests {
     #[test]
     fn test_generate_ts_wrapper_for_window() {
         run_ts_wrapper_test("window");
+    }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_event_test() {
+        run_ts_wrapper_test("event_test");
     }
 }

@@ -18,19 +18,19 @@ class State implements T.IState {
     
     /**
 **/
-    async test_state(): Promise<void> {
+    async testState(): Promise<void> {
         return await invoke('test_state', {  });
     }
     
     /**
 **/
-    async test_state2(name: string): Promise<void> {
+    async testState2(name: string): Promise<void> {
         return await invoke('test_state2', { name: name });
     }
     
     /**
 **/
-    async test_state3(name: string): Promise<void> {
+    async testState3(name: string): Promise<void> {
         return await invoke('test_state3', { name: name });
     }
     

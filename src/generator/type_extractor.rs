@@ -41,26 +41,7 @@ impl<'ast> Visit<'ast> for EventVisitor<'ast> {
                 if let Lit::Str(lit_str) = &expr_lit.lit {
                     let event_name = lit_str.value();
                     let payload_type = if let Some(arg) = node.args.get(1) {
-                        let rust_type = match arg {
-                            Expr::Path(expr_path) => expr_path
-                                .path
-                                .segments
-                                .last()
-                                .map(|s| s.ident.to_string())
-                                .unwrap_or_else(|| "any".to_string()),
-                            Expr::Struct(expr_struct) => expr_struct
-                                .path
-                                .segments
-                                .last()
-                                .map(|s| s.ident.to_string())
-                                .unwrap_or_else(|| "any".to_string()),
-                            _ => "any".to_string(),
-                        };
-                        type_to_ts(
-                            &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
-                            self.defined_types,
-                            true,
-                        )
+                        payload_type_from_expr(arg, self.defined_types)
                     } else {
                         "void".to_string()
                     };
@@ -78,26 +59,7 @@ impl<'ast> Visit<'ast> for EventVisitor<'ast> {
                     let window_name = win_str.value();
                     let event_name = event_str.value();
                     let payload_type = if let Some(arg) = node.args.get(2) {
-                        let rust_type = match arg {
-                            Expr::Path(expr_path) => expr_path
-                                .path
-                                .segments
-                                .last()
-                                .map(|s| s.ident.to_string())
-                                .unwrap_or_else(|| "any".to_string()),
-                            Expr::Struct(expr_struct) => expr_struct
-                                .path
-                                .segments
-                                .last()
-                                .map(|s| s.ident.to_string())
-                                .unwrap_or_else(|| "any".to_string()),
-                            _ => "any".to_string(),
-                        };
-                        type_to_ts(
-                            &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
-                            self.defined_types,
-                            true,
-                        )
+                        payload_type_from_expr(arg, self.defined_types)
                     } else {
                         "void".to_string()
                     };
@@ -111,6 +73,44 @@ impl<'ast> Visit<'ast> for EventVisitor<'ast> {
         }
 
         visit::visit_expr_method_call(self, node);
+    }
+}
+
+fn payload_type_from_expr(expr: &Expr, defined_types: &[String]) -> String {
+    match expr {
+        Expr::Lit(expr_lit) => match &expr_lit.lit {
+            Lit::Str(_) => "string".to_string(),
+            Lit::Int(_) | Lit::Float(_) => "number".to_string(),
+            Lit::Bool(_) => "boolean".to_string(),
+            _ => "any".to_string(),
+        },
+        Expr::Path(expr_path) => {
+            let rust_type = expr_path
+                .path
+                .segments
+                .last()
+                .map(|s| s.ident.to_string())
+                .unwrap_or_else(|| "any".to_string());
+            type_to_ts(
+                &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
+                defined_types,
+                true,
+            )
+        }
+        Expr::Struct(expr_struct) => {
+            let rust_type = expr_struct
+                .path
+                .segments
+                .last()
+                .map(|s| s.ident.to_string())
+                .unwrap_or_else(|| "any".to_string());
+            type_to_ts(
+                &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
+                defined_types,
+                true,
+            )
+        }
+        _ => "any".to_string(),
     }
 }
 

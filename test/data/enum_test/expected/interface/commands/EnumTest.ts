@@ -11,6 +11,6 @@ export interface IEnumTest {
 
     /**
 * * @brief Processes a given message.* * @param msg The message to process.* * @returns A string indicating the processed message.*/
-    process_message(msg: T.Message): Promise<string>;
+    processMessage(msg: T.Message): Promise<string>;
 
 }

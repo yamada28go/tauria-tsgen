@@ -23,6 +23,8 @@ pub fn generate_index_files(
     output_dir: &Path,
     file_names: &mut Vec<String>,
     generate_mock_api: bool,
+    global_events: &[crate::generator::type_extractor::EventInfo],
+    window_events: &[crate::generator::type_extractor::WindowEventInfo],
 ) -> anyhow::Result<()> {
     std::fs::create_dir_all(output_dir)?;
     file_names.sort();
@@ -56,11 +58,25 @@ pub fn generate_index_files(
     }
     std::fs::write(interface_dir.join("index.ts"), interface_index_content)?;
 
-    let tauri_api_index_content = file_names
+    let mut tauri_api_index_content = file_names
         .iter()
         .map(|name| format!("export * from \"./{}\";", name.to_case(Case::Pascal)))
         .collect::<Vec<_>>()
         .join("\n");
+
+    if !global_events.is_empty() {
+        tauri_api_index_content.push_str("\nexport * from \"./GlobalEventHandlers\";");
+    }
+
+    if !window_events.is_empty() {
+        let mut unique_window_names: Vec<String> = window_events.iter().map(|e| e.window_name.clone()).collect();
+        unique_window_names.sort();
+        unique_window_names.dedup();
+        for window_name in unique_window_names {
+            tauri_api_index_content.push_str(&format!("\nexport * from \"../interface/events/{}WindowEventHandlers\";", window_name.to_case(Case::Pascal)));
+        }
+    }
+
     std::fs::write(tauri_api_dir.join("index.ts"), tauri_api_index_content)?;
 
     if generate_mock_api {

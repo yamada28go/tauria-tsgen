@@ -13,6 +13,6 @@ export interface ICmd {
 * ユーザー情報を取得するTauriコマンド**
      * # 引数* * `id` - ユーザーのID**
      * # 戻り値* 指定されたIDに対応するユーザー情報（ダミーデータ）*/
-    get_user_data(id: number): Promise<T.User>;
+    getUserData(id: number): Promise<T.User>;
 
 }

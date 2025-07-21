@@ -20,7 +20,7 @@ class Cmd1 implements T.ICmd1 {
 * ユーザー情報を取得するTauriコマンド**
      * # 引数* * `id` - ユーザーのID**
      * # 戻り値* 指定されたIDに対応するユーザー情報（ダミーデータ）*/
-    async get_user_data(id: number): Promise<T.User> {
+    async getUserData(id: number): Promise<T.User> {
         return await invoke('get_user_data', { id: id });
     }
     

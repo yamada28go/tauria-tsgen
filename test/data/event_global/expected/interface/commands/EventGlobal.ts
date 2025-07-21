@@ -5,18 +5,10 @@
 
 
 
-export interface IState {
+export interface IEventGlobal {
 
     /**
 **/
-    testState(): Promise<void>;
-
-    /**
-**/
-    testState2(name: string): Promise<void>;
-
-    /**
-**/
-    testState3(name: string): Promise<void>;
+    appHandleCommand(): Promise<string>;
 
 }

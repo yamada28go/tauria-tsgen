@@ -18,7 +18,7 @@ class EnumTest implements T.IEnumTest {
     
     /**
 * * @brief Processes a given message.* * @param msg The message to process.* * @returns A string indicating the processed message.*/
-    async process_message(msg: T.Message): Promise<string> {
+    async processMessage(msg: T.Message): Promise<string> {
         return await invoke('process_message', { msg: msg });
     }
     

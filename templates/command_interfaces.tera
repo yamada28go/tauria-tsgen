@@ -21,6 +21,6 @@ export interface I{{ interface_name }} {
 {%- endif -%}
 {% endfor -%}
      */
-    {{ func.name }}({{ func.args | join(sep = ", ")}}): Promise<{{ func.return_type }}>;
+    {{ func.name | camelcase }}({{ func.args | join(sep = ", ")}}): Promise<{{ func.return_type }}>;
 {% endfor %}
 }

@@ -18,7 +18,7 @@ class Window implements T.IWindow {
     
     /**
 **/
-    async my_custom_command(): Promise<void> {
+    async myCustomCommand(): Promise<void> {
         return await invoke('my_custom_command', {  });
     }
     
