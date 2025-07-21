@@ -1,28 +1,4 @@
-//- Generated from cmd1.rs
-
-export interface User {
-
-
-    /**
-* ユーザーID（ユニークな識別子）
-*/
-    id: number;
-
-    /**
-* ユーザーの名前
-*/
-    name: string;
-
-    /**
-* ユーザーのメールアドレス（オプション）
-*/
-    email: string | undefined;
-
-
-}
-
-
-//- Generated from cmd2.rs
+//- Generated from Product.rs
 
 export interface Product {
 
@@ -41,6 +17,30 @@ export interface Product {
 * 在庫数（単位数）
 */
     quantity: number;
+
+
+}
+
+
+//- Generated from User.rs
+
+export interface User {
+
+
+    /**
+* ユーザーID（ユニークな識別子）
+*/
+    id: number;
+
+    /**
+* ユーザーの名前
+*/
+    name: string;
+
+    /**
+* ユーザーのメールアドレス（オプション）
+*/
+    email: string | undefined;
 
 
 }

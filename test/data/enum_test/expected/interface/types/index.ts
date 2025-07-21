@@ -1,4 +1,4 @@
-//- Generated from enum_test.rs
+//- Generated from Message.rs
 
 export enum Message {
 
