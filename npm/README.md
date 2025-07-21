@@ -18,6 +18,39 @@ After installation, you can use the `tauria-tsgen` command directly:
 taura-tsgen --help
 ```
 
+### Recommended Usage (with configuration file)
+
+For more complex projects, it is recommended to use a configuration file.
+
+1.  **Create a configuration file**
+
+    Create a file named `tauria-tsgen-config.json` in your project root:
+
+    ```json
+    {
+      "input_path": "src-tauri/src",
+      "output_path": "src/app/external/tauri-api"
+    }
+    ```
+
+2.  **Add a script to `package.json`**
+
+    Add the following script to your `package.json`:
+
+    ```json
+    "scripts": {
+      "maketsif": "tauria-tsgen --config tauria-tsgen-config.json"
+    }
+    ```
+
+3.  **Run the script**
+
+    You can now generate the TypeScript interfaces by running:
+
+    ```bash
+    npm run maketsif
+    ```
+
 For detailed usage instructions, command-line arguments, and examples, please refer to the main GitHub repository:
 
 [tauria-tsgen GitHub Repository](https://github.com/yamada28go/tauria-tsgen#readme)
