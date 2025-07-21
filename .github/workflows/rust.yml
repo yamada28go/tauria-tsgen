@@ -167,10 +167,10 @@ jobs:
         run: |
           sed -i 's/"version": ".*"/"version": "${{ steps.get_version_from_tag.outputs.version }}"/' npm/package.json
 
-      - name: Install npm dependencies and download binary
-        run: |
-          cd npm
-          npm install
+      # - name: Install npm dependencies and download binary
+      #   run: |
+      #     cd npm
+      #     npm install
 
       - name: Authenticate with npm
         run: |
