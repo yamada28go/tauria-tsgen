@@ -2,19 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { platform, arch } = process;
 
-// node-fetchとadm-zipを動的にrequireする
+// node-fetchとadm-zipを後で設定する
 let nodeFetch;
 let AdmZip;
-
-try {
-  const nodeFetchModule = require('node-fetch');
-  nodeFetch = nodeFetchModule.default; // fetchをnodeFetchにリネーム
-  AdmZip = require('adm-zip');
-} catch (e) {
-  console.error('node-fetch or adm-zip not found. Please ensure npm install has completed successfully.');
-  console.error('Error details:', e.message);
-  process.exit(1);
-}
 
 const packageName = 'tauria-tsgen'; // package.jsonのnameと合わせる
 const owner = 'yamada28go'; // GitHubのリポジトリオーナー名
@@ -140,6 +130,16 @@ async function setExecutablePermissions() {
 }
 
 async function main() {
+  try {
+    const nodeFetchModule = await import('node-fetch');
+    nodeFetch = nodeFetchModule.default;
+    AdmZip = require('adm-zip');
+  } catch (e) {
+    console.error('node-fetch or adm-zip not found. Please ensure npm install has completed successfully.');
+    console.error('Error details:', e.message);
+    process.exit(1);
+  }
+
   await downloadBinary();
   await setExecutablePermissions();
 }
