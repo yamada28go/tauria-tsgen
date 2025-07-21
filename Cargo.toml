@@ -6,7 +6,7 @@ edition = "2024"
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-syn = { version = "2.0", features = ["full", "extra-traits"] }
+syn = { version = "2.0", features = ["full", "extra-traits", "visit"] }
 clap = { version = "4.0", features = ["derive"] }
 log = "0.4"
 env_logger = "0.11"

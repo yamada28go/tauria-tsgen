@@ -1,0 +1,30 @@
+import { Event, UnlistenFn } from "@tauri-apps/api/event";
+import * as W from "@tauri-apps/api/window";
+
+interface I{{ window_name | pascalcase }}WindowEventHandlers {
+    {% for event in events %}
+    On{{ event.event_name | pascalcase }}(event: Event<{{ event.payload_type }}>): void;
+    {% endfor %}
+}
+
+abstract class {{ window_name | pascalcase }}WindowEventHandlers implements I{{ window_name | pascalcase }}WindowEventHandlers {
+    private readonly unlistenFns: Promise<UnlistenFn>[] = [];
+
+    protected constructor() {
+        const appWebview = W.getCurrentWebviewWindow();
+        {% for event in events %}
+        this.unlistenFns.push(
+            appWebview.listen<{{ event.payload_type }}>('{{ event.event_name }}', (event) => { this.On{{ event.event_name | pascalcase }}(event); }));
+        {% endfor %}
+    }
+
+    public async Unlisten() {
+        for (const x of this.unlistenFns) {
+            await x;
+        }
+    }
+
+    {% for event in events %}
+    abstract On{{ event.event_name | pascalcase }}(event: Event<{{ event.payload_type }}>): void;
+    {% endfor %}
+}

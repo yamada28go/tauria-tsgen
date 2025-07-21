@@ -1,7 +1,11 @@
 use log::debug;
 use serde_json;
 use std::collections::HashMap;
-use syn::{Attribute, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat, Type, UseTree};
+use syn::{
+    Attribute, Expr, ExprMethodCall, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat,
+    Type, UseTree,
+    visit::{self, Visit},
+};
 
 const IGNORED_TAURI_TYPES: &[&str] = &[
     "tauri::WebviewWindow",
@@ -9,6 +13,128 @@ const IGNORED_TAURI_TYPES: &[&str] = &[
     "tauri::AppHandle",
     "tauri::Window",
 ];
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct EventInfo {
+    pub event_name: String,
+    pub payload_type: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct WindowEventInfo {
+    pub window_name: String,
+    pub event_name: String,
+    pub payload_type: String,
+}
+
+struct EventVisitor<'a> {
+    global_events: Vec<EventInfo>,
+    window_events: Vec<WindowEventInfo>,
+    defined_types: &'a [String],
+}
+
+impl<'ast> Visit<'ast> for EventVisitor<'ast> {
+    fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
+        let method_name = node.method.to_string();
+        if method_name == "emit" {
+            if let Some(Expr::Lit(expr_lit)) = node.args.get(0) {
+                if let Lit::Str(lit_str) = &expr_lit.lit {
+                    let event_name = lit_str.value();
+                    let payload_type = if let Some(arg) = node.args.get(1) {
+                        let rust_type = match arg {
+                            Expr::Path(expr_path) => expr_path
+                                .path
+                                .segments
+                                .last()
+                                .map(|s| s.ident.to_string())
+                                .unwrap_or_else(|| "any".to_string()),
+                            Expr::Struct(expr_struct) => expr_struct
+                                .path
+                                .segments
+                                .last()
+                                .map(|s| s.ident.to_string())
+                                .unwrap_or_else(|| "any".to_string()),
+                            _ => "any".to_string(),
+                        };
+                        type_to_ts(
+                            &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
+                            self.defined_types,
+                            true,
+                        )
+                    } else {
+                        "void".to_string()
+                    };
+                    self.global_events.push(EventInfo {
+                        event_name,
+                        payload_type,
+                    });
+                }
+            }
+        } else if method_name == "emit_to" {
+            if let (Some(Expr::Lit(win_lit)), Some(Expr::Lit(event_lit))) =
+                (node.args.get(0), node.args.get(1))
+            {
+                if let (Lit::Str(win_str), Lit::Str(event_str)) = (&win_lit.lit, &event_lit.lit) {
+                    let window_name = win_str.value();
+                    let event_name = event_str.value();
+                    let payload_type = if let Some(arg) = node.args.get(2) {
+                        let rust_type = match arg {
+                            Expr::Path(expr_path) => expr_path
+                                .path
+                                .segments
+                                .last()
+                                .map(|s| s.ident.to_string())
+                                .unwrap_or_else(|| "any".to_string()),
+                            Expr::Struct(expr_struct) => expr_struct
+                                .path
+                                .segments
+                                .last()
+                                .map(|s| s.ident.to_string())
+                                .unwrap_or_else(|| "any".to_string()),
+                            _ => "any".to_string(),
+                        };
+                        type_to_ts(
+                            &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
+                            self.defined_types,
+                            true,
+                        )
+                    } else {
+                        "void".to_string()
+                    };
+                    self.window_events.push(WindowEventInfo {
+                        window_name,
+                        event_name,
+                        payload_type,
+                    });
+                }
+            }
+        }
+
+        visit::visit_expr_method_call(self, node);
+    }
+}
+
+pub fn extract_events(
+    items: &[Item],
+    all_extracted_types: &[ExtractedTypeInfo],
+) -> (Vec<EventInfo>, Vec<WindowEventInfo>) {
+    let defined_types_names: Vec<String> = all_extracted_types
+        .iter()
+        .map(|info| info.name.clone())
+        .collect();
+
+    let mut visitor = EventVisitor {
+        global_events: Vec::new(),
+        window_events: Vec::new(),
+        defined_types: &defined_types_names,
+    };
+
+    for item in items {
+        visitor.visit_item(item);
+    }
+
+    (visitor.global_events, visitor.window_events)
+}
 
 pub struct ExtractedTypeInfo {
     pub name: String,

@@ -5,6 +5,7 @@ use anyhow::Context;
 use clap::Parser;
 use cli::{Cli, load_config};
 use generator::index_file_generator::{generate_index_files, generate_user_types_index_file};
+use generator::ts_file_generator::generate_event_handler_files;
 use generator::ts_file_generator::generate_ts_files;
 use log::{error, info};
 use std::fs;
@@ -39,6 +40,8 @@ fn run_app(cli: Cli) -> anyhow::Result<()> {
     let mut file_names = Vec::new();
     let mut all_ts_interfaces: Vec<crate::generator::type_extractor::ExtractedTypeInfo> =
         Vec::new();
+    let mut all_global_events: Vec<crate::generator::type_extractor::EventInfo> = Vec::new();
+    let mut all_window_events: Vec<crate::generator::type_extractor::WindowEventInfo> = Vec::new();
 
     for entry in fs::read_dir(&input_dir).context("Failed to read input directory")? {
         let entry = entry.context("Failed to read directory entry")?;
@@ -56,10 +59,12 @@ fn run_app(cli: Cli) -> anyhow::Result<()> {
                 .ok_or_else(|| anyhow::anyhow!("Invalid file name: {}", path.display()))?;
             dbg!(&file_name);
 
-            let (has_command, ts_interfaces) =
+            let (has_command, ts_interfaces, global_events, window_events) =
                 generate_ts_files(&code, &output_dir, file_name, cli.mock_api)
                     .context("Failed to generate TypeScript wrapper")?;
             all_ts_interfaces.extend(ts_interfaces);
+            all_global_events.extend(global_events);
+            all_window_events.extend(window_events);
 
             if has_command {
                 file_names.push(file_name.to_string());
@@ -72,6 +77,8 @@ fn run_app(cli: Cli) -> anyhow::Result<()> {
             info!("Skipping: {path:?}");
         }
     }
+
+    generate_event_handler_files(&output_dir, &all_global_events, &all_window_events)?;
 
     file_names.sort();
     all_ts_interfaces.sort_by(|a, b| a.name.cmp(&b.name));
