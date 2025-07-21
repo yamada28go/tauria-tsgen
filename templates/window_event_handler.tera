@@ -1,13 +1,7 @@
 import { Event, UnlistenFn } from "@tauri-apps/api/event";
 import * as W from "@tauri-apps/api/window";
 
-interface I{{ window_name | pascalcase }}WindowEventHandlers {
-    {% for event in events %}
-    On{{ event.event_name | pascalcase }}(event: Event<{{ event.payload_type }}>): void;
-    {% endfor %}
-}
-
-abstract class {{ window_name | pascalcase }}WindowEventHandlers implements I{{ window_name | pascalcase }}WindowEventHandlers {
+abstract class {{ window_name | pascalcase }}WindowEventHandlers {
     private readonly unlistenFns: Promise<UnlistenFn>[] = [];
 
     protected constructor() {

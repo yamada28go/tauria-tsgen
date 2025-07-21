@@ -1,13 +1,7 @@
 import { Event, UnlistenFn } from "@tauri-apps/api/event";
 import * as W from "@tauri-apps/api/window";
 
-interface IMainWindowEventHandlers {
-    
-    OnWindowEvent(event: Event<T.EventPayload>): void;
-    
-}
-
-abstract class MainWindowEventHandlers implements IMainWindowEventHandlers {
+abstract class MainWindowEventHandlers {
     private readonly unlistenFns: Promise<UnlistenFn>[] = [];
 
     protected constructor() {

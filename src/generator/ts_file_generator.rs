@@ -73,7 +73,7 @@ pub fn generate_event_handler_files(
     let tauri_api_dir = output_dir.join("tauria-api");
     let events_dir = interface_dir.join("events");
 
-    std::fs::create_dir_all(&events_dir)?;
+    // std::fs::create_dir_all(&events_dir)?;
     std::fs::create_dir_all(&tauri_api_dir)?;
 
     if !global_events.is_empty() {
@@ -110,7 +110,7 @@ pub fn generate_event_handler_files(
             let rendered = tera.render("window_event_handler.tera", &context).unwrap();
             let pascal_case_window_name = window_name.to_case(Case::Pascal);
             std::fs::write(
-                events_dir.join(format!("{pascal_case_window_name}WindowEventHandlers.ts")),
+                tauri_api_dir.join(format!("{pascal_case_window_name}WindowEventHandlers.ts")),
                 rendered,
             )?;
         }
