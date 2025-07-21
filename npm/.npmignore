@@ -1,1 +1,3 @@
 bin/*
+# ただしエントリポイントの shim スクリプトだけは例外（! で再 include）
+!bin/tauria-tsgen
