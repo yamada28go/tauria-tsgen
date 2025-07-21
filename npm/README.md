@@ -7,7 +7,7 @@ This is the npm package for `tauria-tsgen`, a CLI tool that automatically genera
 To install the `tauria-tsgen` CLI tool, run the following command:
 
 ```bash
-npm install tauria-tsgen
+npm install tauria-tsgen --save-dev
 ```
 
 ## Usage
