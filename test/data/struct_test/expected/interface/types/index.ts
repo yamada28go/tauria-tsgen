@@ -1,4 +1,4 @@
-//- Generated from Product.rs
+//- Generated from struct_test.rs
 
 export interface Product {
 
@@ -22,7 +22,7 @@ export interface Product {
 }
 
 
-//- Generated from User.rs
+//- Generated from struct_test.rs
 
 export interface User {
 

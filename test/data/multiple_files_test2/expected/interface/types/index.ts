@@ -1,4 +1,4 @@
-//- Generated from User.rs
+//- Generated from cmd.rs
 
 export interface User {
 
