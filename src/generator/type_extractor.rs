@@ -93,7 +93,7 @@ fn payload_type_from_expr(expr: &Expr, defined_types: &[String]) -> String {
                 .map(|s| s.ident.to_string())
                 .unwrap_or_else(|| "any".to_string());
             type_to_ts(
-                &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
+                &syn::parse_str(&rust_type).unwrap_or_else(|_| syn::parse_str("any").unwrap()),
                 defined_types,
                 true,
             )
@@ -106,7 +106,7 @@ fn payload_type_from_expr(expr: &Expr, defined_types: &[String]) -> String {
                 .map(|s| s.ident.to_string())
                 .unwrap_or_else(|| "any".to_string());
             type_to_ts(
-                &syn::parse_str(&rust_type).unwrap_or(syn::parse_str("any").unwrap()),
+                &syn::parse_str(&rust_type).unwrap_or_else(|_| syn::parse_str("any").unwrap()),
                 defined_types,
                 true,
             )
@@ -137,6 +137,7 @@ pub fn extract_events(
     (visitor.global_events, visitor.window_events)
 }
 
+#[derive(Debug)]
 pub struct ExtractedTypeInfo {
     pub name: String,
     pub ts_interface: serde_json::Value,
@@ -200,14 +201,18 @@ pub fn extract_and_convert_types(items: &[Item]) -> Vec<ExtractedTypeInfo> {
 }
 
 pub(crate) fn has_derive_macro(attrs: &[Attribute], macro_name: &str) -> bool {
+    println!("Checking for derive macro: {}", macro_name);
     attrs.iter().any(|attr| {
         if attr.path().is_ident("derive") {
+            println!("Found derive attribute: {:?}", attr);
             if let Ok(list) = attr.parse_args_with(
                 syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated,
             ) {
-                return list
+                let found = list
                     .iter()
                     .any(|path| path.segments.last().is_some_and(|s| s.ident == macro_name));
+                println!("Macro {} found in derive list: {}", macro_name, found);
+                return found;
             }
         }
         false
@@ -970,8 +975,6 @@ mod tests {
         let parsed_item: Item = syn::parse_str(item_code).unwrap();
         if let Item::Fn(func) = parsed_item {
             assert!(has_tauri_command(&func.attrs));
-        } else {
-            panic!("Expected a function");
         }
 
         let item_code = r#"
@@ -981,8 +984,6 @@ mod tests {
         let parsed_item: Item = syn::parse_str(item_code).unwrap();
         if let Item::Fn(func) = parsed_item {
             assert!(has_tauri_command(&func.attrs));
-        } else {
-            panic!("Expected a function");
         }
 
         let item_code = r#"

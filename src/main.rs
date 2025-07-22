@@ -12,12 +12,12 @@ use std::fs;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
 
     let cli = Cli::parse();
 
     if let Err(e) = run_app(cli) {
-        error!("Application error: {e}");
+        error!("Application error: {:?}", e);
         std::process::exit(1);
     }
 

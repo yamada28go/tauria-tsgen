@@ -1,3 +1,4 @@
+use log::info;
 use rust_embed::RustEmbed;
 use std::path::Path;
 #[allow(unused_imports)]
@@ -21,8 +22,19 @@ impl Filter for PascalCaseFilter {
     }
 }
 
+#[derive(Debug)]
+pub struct CamelCaseFilter;
+
+impl Filter for CamelCaseFilter {
+    fn filter(&self, value: &tera::Value, _: &HashMap<String, tera::Value>) -> tera::Result<tera::Value> {
+        let s = from_value::<String>(value.clone())?;
+        Ok(to_value(s.to_case(Case::Camel))?)
+    }
+}
+
 fn register_tera_filters(tera: &mut Tera) {
-    tera.register_filter("pascal_case", PascalCaseFilter);
+    tera.register_filter("pascalcase", PascalCaseFilter);
+    tera.register_filter("camelcase", CamelCaseFilter);
 }
 
 pub fn generate_event_handler_files(
@@ -81,6 +93,12 @@ pub fn generate_ts_files(
     let functions = extract_tauri_commands(&syntax.items, &all_extracted_types);
     let (global_events, window_events) = extract_events(&syntax.items, &all_extracted_types);
 
+    // デバッグログの追加
+    log::debug!("Extracted types: {:?}", all_extracted_types);
+    log::debug!("Extracted functions (commands): {:?}", functions);
+    log::debug!("Extracted global events: {:?}", global_events);
+    log::debug!("Extracted window events: {:?}", window_events);
+
     if functions.is_empty() {
         return Ok((false, all_extracted_types, global_events, window_events));
     }
@@ -91,6 +109,10 @@ pub fn generate_ts_files(
     let mut context = Context::new();
     context.insert("file_name", &file_name.to_case(Case::Pascal));
     context.insert("functions", &functions);
+    context.insert("interface_name", &file_name.to_case(Case::Pascal));
+
+    // デバッグログの追加
+    log::debug!("Tera context: {:?}", context);
 
     let asset = Asset::get("command_interfaces.tera").unwrap();
     let command_interface_template = std::str::from_utf8(asset.data.as_ref())?;
@@ -101,6 +123,7 @@ pub fn generate_ts_files(
         interface_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
         rendered_interface,
     )?;
+    info!("Generated interface file: {}.ts", file_name.to_case(Case::Pascal));
 
     let asset = Asset::get("tauria_api.tera").unwrap();
     let tauri_api_template = std::str::from_utf8(asset.data.as_ref())?;
@@ -111,6 +134,7 @@ pub fn generate_ts_files(
         tauri_api_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
         rendered_tauri_api,
     )?;
+    info!("Generated tauri-api file: {}.ts", file_name.to_case(Case::Pascal));
 
     if generate_mock_api {
         let asset = Asset::get("mock_api.tera").unwrap();
@@ -122,6 +146,7 @@ pub fn generate_ts_files(
             mock_api_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
             rendered_mock_api,
         )?;
+        info!("Generated mock-api file: {}.ts", file_name.to_case(Case::Pascal));
     }
 
     Ok((true, all_extracted_types, global_events, window_events))
@@ -139,11 +164,19 @@ mod tests {
         use convert_case::{Case, Casing};
         let pascal_case_file_name = test_case_name.to_case(Case::Pascal);
         #[allow(unused_variables)]
-        let rust_file_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("test/data")
-            .join(test_case_name)
-            .join("src")
-            .join(format!("{}.rs", test_case_name));
+        let rust_file_path = if test_case_name == "event_window" {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("test/data")
+                .join(test_case_name)
+                .join("src")
+                .join("event_test.rs") // Specific file name for event_window
+        } else {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("test/data")
+                .join(test_case_name)
+                .join("src")
+                .join(format!("{}.rs", test_case_name))
+        };
         let output_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("target/generated_ts")
             .join(test_case_name);
