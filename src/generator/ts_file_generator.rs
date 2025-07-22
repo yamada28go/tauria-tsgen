@@ -110,6 +110,7 @@ pub fn generate_ts_files(
     context.insert("file_name", &file_name.to_case(Case::Pascal));
     context.insert("functions", &functions);
     context.insert("interface_name", &file_name.to_case(Case::Pascal));
+    context.insert("original_file_name", &file_name);
 
     // ユーザー定義型が存在するかどうかのフラグを追加
     let has_user_defined_types_in_file = !all_extracted_types.is_empty();
