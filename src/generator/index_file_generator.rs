@@ -94,9 +94,9 @@ pub fn generate_index_files(
 // You can switch between tauria-api and mock-api by modifying this file.
 
 
-export * from "./tauria-api";
+export * from ".\/tauria-api";
 
-// export * from "./mock-api";
+// export * from ".\/mock-api";
 "#
     .to_string();
     std::fs::write(output_dir.join("index.ts"), root_index_content)?;
@@ -179,7 +179,7 @@ mod tests {
         create_dummy_file(&types_dir, "index.ts", "export interface MyType {};");
 
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         let interface_index_content = fs::read_to_string(interface_dir.join("index.ts"))
@@ -196,7 +196,7 @@ mod tests {
         create_dummy_file(&types_dir, "index.ts", ""); // Empty content
 
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         let interface_index_content = fs::read_to_string(interface_dir.join("index.ts"))
@@ -210,7 +210,7 @@ mod tests {
         // Do not create types/index.ts
 
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         let interface_dir = output_dir.path().join("interface");
@@ -223,7 +223,7 @@ mod tests {
     fn test_generate_index_files_no_mock_api() {
         let output_dir = tempdir().expect("Failed to create temp dir");
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         assert!(!output_dir.path().join("mock-api").exists());
@@ -381,7 +381,7 @@ export interface TypeB {
             "m_file".to_string(),
         ];
 
-        generate_index_files(&output_dir, &mut file_names, true)
+        generate_index_files(&output_dir, &mut file_names, true, &[], &[])
             .expect("indexファイルの生成に失敗しました");
 
         let interface_index_content =
