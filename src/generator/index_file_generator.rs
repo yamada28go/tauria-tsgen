@@ -94,9 +94,9 @@ pub fn generate_index_files(
 // You can switch between tauria-api and mock-api by modifying this file.
 
 
-export * from ".\/tauria-api";
+export * from "./tauria-api";
 
-// export * from ".\/mock-api";
+// export * from "./mock-api";
 "#
     .to_string();
     std::fs::write(output_dir.join("index.ts"), root_index_content)?;
