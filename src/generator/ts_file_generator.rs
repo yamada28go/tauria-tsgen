@@ -2,38 +2,69 @@ use rust_embed::RustEmbed;
 use std::path::Path;
 #[allow(unused_imports)]
 use syn::{Attribute, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat, Type};
-use tera::Tera;
+use tera::{Context, Tera, Filter, from_value, to_value};
+use convert_case::{Case, Casing};
+use crate::generator::type_extractor::{extract_and_convert_types, extract_tauri_commands, extract_events};
+use std::collections::HashMap;
 
 #[derive(RustEmbed)]
 #[folder = "templates/"]
 pub struct Asset;
 
+#[derive(Debug)]
+pub struct PascalCaseFilter;
+
+impl Filter for PascalCaseFilter {
+    fn filter(&self, value: &tera::Value, _: &HashMap<String, tera::Value>) -> tera::Result<tera::Value> {
+        let s = from_value::<String>(value.clone())?;
+        Ok(to_value(s.to_case(Case::Pascal))?)
+    }
+}
+
+fn register_tera_filters(tera: &mut Tera) {
+    tera.register_filter("pascal_case", PascalCaseFilter);
+}
+
 pub fn generate_event_handler_files(
-    _output_dir: &Path,
-    _global_events: &[crate::generator::type_extractor::EventInfo],
-    _window_events: &[crate::generator::type_extractor::WindowEventInfo],
+    output_dir: &Path,
+    global_events: &[crate::generator::type_extractor::EventInfo],
+    window_events: &[crate::generator::type_extractor::WindowEventInfo],
 ) -> anyhow::Result<()> {
-    
     let mut tera = Tera::default();
     register_tera_filters(&mut tera);
+
+    if !global_events.is_empty() {
+        let mut context = Context::new();
+        context.insert("events", global_events);
+        let asset = Asset::get("global_event_handler.tera").unwrap();
+        let template = std::str::from_utf8(asset.data.as_ref())?;
+        let rendered = tera.render_str(template, &context)?;
+        std::fs::write(output_dir.join("tauria-api").join("GlobalEventHandlers.ts"), rendered)?;
+    }
+
+    if !window_events.is_empty() {
+        let mut unique_window_names: Vec<String> = window_events.iter().map(|e| e.window_name.clone()).collect();
+        unique_window_names.sort();
+        unique_window_names.dedup();
+
+        for window_name in unique_window_names {
+            let events_for_window: Vec<_> = window_events.iter().filter(|e| e.window_name == window_name).collect();
+            let mut context = Context::new();
+            context.insert("window_name", &window_name);
+            context.insert("events", &events_for_window);
+            let asset = Asset::get("window_event_handler.tera").unwrap();
+            let template = std::str::from_utf8(asset.data.as_ref())?;
+            let rendered = tera.render_str(template, &context)?;
+            let pascal_case_window_name = window_name.to_case(Case::Pascal);
+            let event_handler_dir = output_dir.join("interface").join("events");
+            std::fs::create_dir_all(&event_handler_dir)?;
+            std::fs::write(event_handler_dir.join(format!("{}WindowEventHandlers.ts", pascal_case_window_name)), rendered)?;
+        }
+    }
+
     Ok(())
 }
 
-#[allow(unused_variables)]
-/// Generates TypeScript files from Rust code.
-///
-/// This function parses Rust code, extracts Tauri commands and user-defined types,
-/// and generates corresponding TypeScript files for interfaces, Tauri APIs, and mock APIs.
-///
-/// # Arguments
-///
-/// * `rust_code` - A string slice containing the Rust code to be parsed.
-/// * `output_dir` - The root directory where the generated TypeScript files will be saved.
-/// * `file_name` - The base name for the generated TypeScript files.
-///
-/// # Returns
-///
-/// An `anyhow::Result<(bool, Vec<serde_json::Value>)>` indicating whether any command files were generated and the extracted TypeScript interfaces.
 pub fn generate_ts_files(
     rust_code: &str,
     output_dir: &Path,
@@ -45,14 +76,56 @@ pub fn generate_ts_files(
     Vec<crate::generator::type_extractor::EventInfo>,
     Vec<crate::generator::type_extractor::WindowEventInfo>,
 )> {
+    let syntax = syn::parse_file(rust_code)?;
+    let all_extracted_types = extract_and_convert_types(&syntax.items);
+    let functions = extract_tauri_commands(&syntax.items, &all_extracted_types);
+    let (global_events, window_events) = extract_events(&syntax.items, &all_extracted_types);
+
+    if functions.is_empty() {
+        return Ok((false, all_extracted_types, global_events, window_events));
+    }
+
     let mut tera = Tera::default();
     register_tera_filters(&mut tera);
-    Ok((false, vec![], vec![], vec![]))
-}
 
-// このファイルで参照されている`register_tera_filters`関数の定義が見つからないため、
-// 空の関数を仮実装します。
-fn register_tera_filters(_tera: &mut Tera) {}
+    let mut context = Context::new();
+    context.insert("file_name", &file_name.to_case(Case::Pascal));
+    context.insert("functions", &functions);
+
+    let asset = Asset::get("command_interfaces.tera").unwrap();
+    let command_interface_template = std::str::from_utf8(asset.data.as_ref())?;
+    let rendered_interface = tera.render_str(command_interface_template, &context)?;
+    let interface_dir = output_dir.join("interface").join("commands");
+    std::fs::create_dir_all(&interface_dir)?;
+    std::fs::write(
+        interface_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
+        rendered_interface,
+    )?;
+
+    let asset = Asset::get("tauria_api.tera").unwrap();
+    let tauri_api_template = std::str::from_utf8(asset.data.as_ref())?;
+    let rendered_tauri_api = tera.render_str(tauri_api_template, &context)?;
+    let tauri_api_dir = output_dir.join("tauria-api");
+    std::fs::create_dir_all(&tauri_api_dir)?;
+    std::fs::write(
+        tauri_api_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
+        rendered_tauri_api,
+    )?;
+
+    if generate_mock_api {
+        let asset = Asset::get("mock_api.tera").unwrap();
+        let mock_api_template = std::str::from_utf8(asset.data.as_ref())?;
+        let rendered_mock_api = tera.render_str(mock_api_template, &context)?;
+        let mock_api_dir = output_dir.join("mock-api");
+        std::fs::create_dir_all(&mock_api_dir)?;
+        std::fs::write(
+            mock_api_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
+            rendered_mock_api,
+        )?;
+    }
+
+    Ok((true, all_extracted_types, global_events, window_events))
+}
 
 
 #[cfg(test)]
@@ -121,7 +194,7 @@ mod tests {
             compare_generated_files(
                 &output_dir,
                 test_case_name,
-                "interface/events/GlobalEventHandlers.ts",
+                "tauria-api/GlobalEventHandlers.ts",
             );
         }
 
@@ -170,62 +243,52 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_basic_file() {
         run_ts_wrapper_test("basic");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_struct_test_file() {
         run_ts_wrapper_test("struct_test");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_enum_test_file() {
         run_ts_wrapper_test("enum_test");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_nesting_type_test() {
         run_ts_wrapper_test("nesting_type_test");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_app_handle() {
         run_ts_wrapper_test("app_handle");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_webview_window() {
         run_ts_wrapper_test("webview_window");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_state() {
         run_ts_wrapper_test("state");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_response() {
         run_ts_wrapper_test("response");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_window() {
         run_ts_wrapper_test("window");
     }
 
     #[test]
-    #[ignore] // 実装がないため、一時的にテストを無視します
     fn test_generate_ts_wrapper_for_event_test() {
-        run_ts_wrapper_test("event_test");
+        run_ts_wrapper_test("event_global");
     }
 }
