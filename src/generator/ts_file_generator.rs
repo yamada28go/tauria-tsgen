@@ -111,7 +111,10 @@ pub fn generate_ts_files(
     context.insert("functions", &functions);
     context.insert("interface_name", &file_name.to_case(Case::Pascal));
 
-    // デバッグログの追加
+    // ユーザー定義型が存在するかどうかのフラグを追加
+    let has_user_defined_types_in_file = !all_extracted_types.is_empty();
+    context.insert("has_user_defined_types_in_file", &has_user_defined_types_in_file);
+
     log::debug!("Tera context: {:?}", context);
 
     let asset = Asset::get("command_interfaces.tera").unwrap();
