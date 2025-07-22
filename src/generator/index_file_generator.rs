@@ -137,7 +137,7 @@ pub fn generate_user_types_index_file(
 
         all_types_content.push_str(&format!(
             "//- Generated from {}.rs\n",
-            extracted_type_info.name
+            extracted_type_info.original_file_name
         ));
         let mut context = Context::new();
         context.insert("ts_interface", &extracted_type_info.ts_interface);

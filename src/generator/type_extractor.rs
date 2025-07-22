@@ -143,6 +143,7 @@ pub struct ExtractedTypeInfo {
     pub ts_interface: serde_json::Value,
     pub is_serializable: bool,
     pub is_deserializable: bool,
+    pub original_file_name: String,
 }
 
 /// Extracts and converts Rust structs and enums to TypeScript interfaces.
@@ -158,7 +159,7 @@ pub struct ExtractedTypeInfo {
 /// # Returns
 ///
 /// A vector of `ExtractedTypeInfo` representing the extracted TypeScript interfaces with serialization/deserialization info.
-pub fn extract_and_convert_types(items: &[Item]) -> Vec<ExtractedTypeInfo> {
+pub fn extract_and_convert_types(items: &[Item], original_file_name: &str) -> Vec<ExtractedTypeInfo> {
     let mut extracted_types = Vec::new();
     let mut defined_types_names = Vec::new(); // Keep track of defined type names for type_to_ts
 
@@ -176,6 +177,7 @@ pub fn extract_and_convert_types(items: &[Item]) -> Vec<ExtractedTypeInfo> {
                     ts_interface,
                     is_serializable,
                     is_deserializable,
+                    original_file_name: original_file_name.to_string(),
                 });
                 defined_types_names.push(struct_name);
             }
@@ -191,6 +193,7 @@ pub fn extract_and_convert_types(items: &[Item]) -> Vec<ExtractedTypeInfo> {
                     ts_interface,
                     is_serializable,
                     is_deserializable,
+                    original_file_name: original_file_name.to_string(),
                 });
                 defined_types_names.push(enum_name);
             }

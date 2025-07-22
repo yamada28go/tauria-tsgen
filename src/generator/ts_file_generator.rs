@@ -89,7 +89,7 @@ pub fn generate_ts_files(
     Vec<crate::generator::type_extractor::WindowEventInfo>,
 )> {
     let syntax = syn::parse_file(rust_code)?;
-    let all_extracted_types = extract_and_convert_types(&syntax.items);
+    let all_extracted_types = extract_and_convert_types(&syntax.items, file_name);
     let functions = extract_tauri_commands(&syntax.items, &all_extracted_types);
     let (global_events, window_events) = extract_events(&syntax.items, &all_extracted_types);
 
