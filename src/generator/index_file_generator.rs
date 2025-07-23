@@ -70,7 +70,7 @@ pub fn generate_index_files(
         .join("\n");
 
     if !global_events.is_empty() {
-        tauri_api_index_content.push_str("\nexport * from \"./event/GlobalEventHandlers\";"); // 変更
+        tauri_api_index_content.push_str("\nexport * from \"./events/GlobalEventHandlers\";"); // "event" から "events" に変更
     }
 
     if !window_events.is_empty() {

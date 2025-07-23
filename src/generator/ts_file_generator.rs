@@ -61,7 +61,7 @@ pub fn generate_event_handler_files(
         let asset = Asset::get("global_event_handler.tera").unwrap();
         let template = std::str::from_utf8(asset.data.as_ref())?;
         let rendered = tera.render_str(template, &context)?;
-        let event_dir = output_dir.join("tauria-api").join("event");
+        let event_dir = output_dir.join("tauria-api").join("events");
         std::fs::create_dir_all(&event_dir)?;
         std::fs::write(event_dir.join("GlobalEventHandlers.ts"), rendered)?;
     }
@@ -317,7 +317,7 @@ mod tests {
             compare_generated_files(
                 &output_dir,
                 test_case_name,
-                "tauria-api/event/GlobalEventHandlers.ts",
+                "tauria-api/events/GlobalEventHandlers.ts", // ここを修正
             );
         }
 
