@@ -1,2 +1,2 @@
-export * from "./EventGlobal";
-export * from "./GlobalEventHandlers";
+export * from "./commands/EventGlobal";
+export * from "./event/GlobalEventHandlers";
