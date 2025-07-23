@@ -1,4 +1,4 @@
-//- Generated from EventPayload.rs
+//- Generated from event_test.rs
 
 export interface EventPayload {
 
