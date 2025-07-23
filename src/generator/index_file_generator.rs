@@ -60,12 +60,12 @@ pub fn generate_index_files(
 
     let mut tauri_api_index_content = file_names
         .iter()
-        .map(|name| format!("export * from \"./{}\";", name.to_case(Case::Pascal)))
+        .map(|name| format!("export * from \"./commands/{}\";", name.to_case(Case::Pascal))) // 変更
         .collect::<Vec<_>>()
         .join("\n");
 
     if !global_events.is_empty() {
-        tauri_api_index_content.push_str("\nexport * from \"./GlobalEventHandlers\";");
+        tauri_api_index_content.push_str("\nexport * from \"./event/GlobalEventHandlers\";"); // 変更
     }
 
     if !window_events.is_empty() {

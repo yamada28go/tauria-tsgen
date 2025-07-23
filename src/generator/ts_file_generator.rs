@@ -51,7 +51,9 @@ pub fn generate_event_handler_files(
         let asset = Asset::get("global_event_handler.tera").unwrap();
         let template = std::str::from_utf8(asset.data.as_ref())?;
         let rendered = tera.render_str(template, &context)?;
-        std::fs::write(output_dir.join("tauria-api").join("GlobalEventHandlers.ts"), rendered)?;
+        let event_dir = output_dir.join("tauria-api").join("event");
+        std::fs::create_dir_all(&event_dir)?;
+        std::fs::write(event_dir.join("GlobalEventHandlers.ts"), rendered)?;
     }
 
     if !window_events.is_empty() {
@@ -162,7 +164,7 @@ pub fn generate_ts_files(
     let asset = Asset::get("tauria_api.tera").unwrap();
     let tauri_api_template = std::str::from_utf8(asset.data.as_ref())?;
     let rendered_tauri_api = tera.render_str(tauri_api_template, &context)?;
-    let tauri_api_dir = output_dir.join("tauria-api");
+    let tauri_api_dir = output_dir.join("tauria-api").join("commands");
     std::fs::create_dir_all(&tauri_api_dir)?;
     std::fs::write(
         tauri_api_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
