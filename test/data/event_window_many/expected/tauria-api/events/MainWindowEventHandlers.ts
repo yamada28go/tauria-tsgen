@@ -1,21 +1,16 @@
-import { Event, UnlistenFn } from "@tauri-apps/api/event";
-import * as W from "@tauri-apps/api/window";
+import { Event, listen, UnlistenFn } from "@tauri-apps/api/event";
 import * as T from "../../interface/types";
 
 abstract class MainWindowEventHandlers {
     private readonly unlistenFns: Promise<UnlistenFn>[] = [];
 
     protected constructor() {
-        const appWebview = W.getCurrentWebviewWindow();
         
         this.unlistenFns.push(
-            appWebview.listen<T.EventPayload>('window-event', (event) => { this.OnWindowEvent(event); }));
+            listen<T.EventPayload>('window-event', (event) => { this.OnWindowEvent(event); }));
         
         this.unlistenFns.push(
-            appWebview.listen<T.MainPayload>('main_event', (event) => { this.OnMainEvent(event); }));
-        
-        this.unlistenFns.push(
-            appWebview.listen<string>('another_main_event', (event) => { this.OnAnotherMainEvent(event); }));
+            listen<T.payload>('main_event', (event) => { this.OnMainEvent(event); }));
         
     }
 
@@ -28,8 +23,6 @@ abstract class MainWindowEventHandlers {
     
     abstract OnWindowEvent(event: Event<T.EventPayload>): void;
     
-    abstract OnMainEvent(event: Event<T.MainPayload>): void;
-    
-    abstract OnAnotherMainEvent(event: Event<string>): void;
+    abstract OnMainEvent(event: Event<T.payload>): void;
     
 }

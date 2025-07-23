@@ -37,48 +37,30 @@ impl<'ast> Visit<'ast> for EventVisitor<'ast> {
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         let method_name = node.method.to_string();
 
-        // Check the receiver to distinguish app.emit from window.emit
         if let syn::Expr::Path(path) = &*node.receiver {
             if let Some(ident) = path.path.segments.last().map(|s| &s.ident) {
-                if ident == "app" { // Receiver is AppHandle
-                    if method_name == "emit" { // app.emit is global event
-                        if let Some(syn::Expr::Lit(expr_lit)) = node.args.get(0) {
-                            if let syn::Lit::Str(lit_str) = &expr_lit.lit {
-                                let event_name = lit_str.value();
-                                let payload_type = if let Some(arg) = node.args.get(1) {
-                                    payload_type_from_expr(arg, self.defined_types)
-                                } else {
-                                    "void".to_string()
-                                };
-                                self.global_events.push(EventInfo {
-                                    event_name,
-                                    payload_type,
-                                });
-                            }
-                        }
-                    }
-                } else if ident == "window" { // Receiver is WebviewWindow
-                    if method_name == "emit" { // window.emit is window event
-                        if let Some(syn::Expr::Lit(event_lit)) = node.args.get(0) {
-                            if let syn::Lit::Str(event_str) = &event_lit.lit {
-                                let window_name = "main".to_string(); // Heuristic: default to "main" for window.emit
-                                let event_name = event_str.value();
-                                let payload_type = if let Some(arg) = node.args.get(1) {
-                                    payload_type_from_expr(arg, self.defined_types)
-                                } else {
-                                    "void".to_string()
-                                };
-                                self.window_events.push(WindowEventInfo {
-                                    window_name,
-                                    event_name,
-                                    payload_type,
-                                });
-                            }
+                // app.emit と window.emit をグローバルイベントとして扱う
+                if (ident == "app" || ident == "window") && method_name == "emit" {
+                    if let Some(syn::Expr::Lit(expr_lit)) = node.args.get(0) {
+                        if let syn::Lit::Str(lit_str) = &expr_lit.lit {
+                            let event_name = lit_str.value();
+                            let payload_type = if let Some(arg) = node.args.get(1) {
+                                payload_type_from_expr(arg, self.defined_types)
+                            } else {
+                                "void".to_string()
+                            };
+                            self.global_events.push(EventInfo {
+                                event_name,
+                                payload_type,
+                            });
                         }
                     }
                 }
             }
-        } else if method_name == "emit_to" { // emit_to is always window event
+        }
+
+        // emit_to はウィンドウイベントとして扱う
+        if method_name == "emit_to" {
             if let (Some(syn::Expr::Lit(win_lit)), Some(syn::Expr::Lit(event_lit))) =
                 (node.args.get(0), node.args.get(1))
             {

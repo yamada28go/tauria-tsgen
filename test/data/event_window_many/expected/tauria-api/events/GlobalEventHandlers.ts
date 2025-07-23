@@ -12,6 +12,9 @@ abstract class GlobalEventHandlers {
         this.unlistenFns.push(
             listen<T.SubPayload>('sub_event', (event) => { this.OnSubEvent(event); }));
         
+        this.unlistenFns.push(
+            listen<string>('another_main_event', (event) => { this.OnAnotherMainEvent(event); }));
+        
     }
 
     public async Unlisten() {
@@ -22,5 +25,7 @@ abstract class GlobalEventHandlers {
 
     
     abstract OnSubEvent(event: Event<T.SubPayload>): void;
+    
+    abstract OnAnotherMainEvent(event: Event<string>): void;
     
 }

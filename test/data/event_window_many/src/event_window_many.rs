@@ -14,7 +14,7 @@ pub struct SubPayload {
 
 #[tauri::command]
 fn emit_main_event(app: AppHandle, payload: MainPayload) {
-    app.emit_to("main","main_event", MainPayload { message: "test".to_string(), value: 1 }).unwrap();
+    app.emit_to("main", "main_event", payload).unwrap();
 }
 
 #[tauri::command]
@@ -24,5 +24,5 @@ fn emit_sub_event(window: WebviewWindow, payload: SubPayload) {
 
 #[tauri::command]
 fn emit_another_main_event(app: AppHandle) {
-    app.emit_to("main","another_main_event", "simple string").unwrap();
+    app.emit("another_main_event", "simple string").unwrap();
 }
