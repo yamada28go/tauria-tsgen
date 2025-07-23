@@ -1,5 +1,7 @@
 #!/bin/zsh
 
+# /test/dataの結果ファイルを一括で作成する
+
 # /test/data ディレクトリの絶対パス
 TEST_DATA_DIR="test/data"
 
