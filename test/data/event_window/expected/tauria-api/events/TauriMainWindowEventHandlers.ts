@@ -1,14 +1,13 @@
 import { Event, listen, UnlistenFn } from "@tauri-apps/api/event";
+import * as T from "../../interface/types";
 
-
-
-abstract class GlobalEventHandlers {
+abstract class TauriMainWindowEventHandlers {
     private readonly unlistenFns: Promise<UnlistenFn>[] = [];
 
     protected constructor() {
         
         this.unlistenFns.push(
-            listen<string>('global', (event) => { this.OnGlobal(event); }));
+            listen<T.EventPayload>('window-event', (event) => { this.OnWindowEvent(event); }));
         
     }
 
@@ -19,6 +18,6 @@ abstract class GlobalEventHandlers {
     }
 
     
-    abstract OnGlobal(event: Event<string>): void;
+    abstract OnWindowEvent(event: Event<T.EventPayload>): void;
     
 }

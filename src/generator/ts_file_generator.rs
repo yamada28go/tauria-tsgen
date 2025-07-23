@@ -84,12 +84,12 @@ pub fn generate_event_handler_files(
             "has_user_defined_types_in_global_events",
             &has_user_defined_types_in_global_events,
         ); // この行を追加
-        let asset = Asset::get("global_event_handler.tera").unwrap();
+        let asset = Asset::get("tauri_global_event_handler.tera").unwrap();
         let template = std::str::from_utf8(asset.data.as_ref())?;
         let rendered = tera.render_str(template, &context)?;
         let event_dir = output_dir.join("tauria-api").join("events");
         std::fs::create_dir_all(&event_dir)?;
-        std::fs::write(event_dir.join("GlobalEventHandlers.ts"), rendered)?;
+        std::fs::write(event_dir.join("TauriGlobalEventHandlers.ts"), rendered)?;
     }
 
     if !window_events.is_empty() {
@@ -108,14 +108,14 @@ pub fn generate_event_handler_files(
             let mut context = Context::new();
             context.insert("window_name", &window_name);
             context.insert("events", &events_for_window);
-            let asset = Asset::get("window_event_handler.tera").unwrap();
+            let asset = Asset::get("tauri_window_event_handler.tera").unwrap();
             let template = std::str::from_utf8(asset.data.as_ref())?;
             let rendered = tera.render_str(template, &context)?;
             let pascal_case_window_name = window_name.to_case(Case::Pascal);
             let event_handler_dir = output_dir.join("tauria-api").join("events");
             std::fs::create_dir_all(&event_handler_dir)?;
             std::fs::write(
-                event_handler_dir.join(format!("{pascal_case_window_name}WindowEventHandlers.ts")),
+                event_handler_dir.join(format!("Tauri{pascal_case_window_name}WindowEventHandlers.ts")),
                 rendered,
             )?;
         }
@@ -370,7 +370,7 @@ mod tests {
             compare_generated_files(
                 &output_dir,
                 test_case_name,
-                "tauria-api/events/GlobalEventHandlers.ts", // ここを修正
+                "tauria-api/events/TauriGlobalEventHandlers.ts", // ここを修正
             );
         }
 
@@ -522,7 +522,7 @@ mod tests {
         compare_generated_files(
             &output_dir,
             test_case_name,
-            "tauria-api/events/MainWindowEventHandlers.ts",
+            "tauria-api/events/TauriMainWindowEventHandlers.ts",
         );
     }
 }

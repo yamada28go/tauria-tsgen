@@ -4,7 +4,7 @@ import { Event, listen, UnlistenFn } from "@tauri-apps/api/event";
 import * as T from "../../interface/types/index"
 
 
-abstract class GlobalEventHandlers {
+abstract class TauriGlobalEventHandlers {
     private readonly unlistenFns: Promise<UnlistenFn>[] = [];
 
     protected constructor() {
