@@ -16,7 +16,7 @@ use std::path::PathBuf;
 /// Initializes logging and parses command-line arguments. It then calls `run_app`
 /// to execute the core logic and handles any errors that occur.
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let cli = Cli::parse();
 
