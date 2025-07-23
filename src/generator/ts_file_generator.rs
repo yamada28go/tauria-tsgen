@@ -115,7 +115,9 @@ pub fn generate_event_handler_files(
             let event_handler_dir = output_dir.join("tauria-api").join("events");
             std::fs::create_dir_all(&event_handler_dir)?;
             std::fs::write(
-                event_handler_dir.join(format!("Tauri{pascal_case_window_name}WindowEventHandlers.ts")),
+                event_handler_dir.join(format!(
+                    "Tauri{pascal_case_window_name}WindowEventHandlers.ts"
+                )),
                 rendered,
             )?;
         }
@@ -389,7 +391,7 @@ mod tests {
                     &output_dir,
                     test_case_name,
                     &format!(
-                        "tauria-api/events/{}WindowEventHandlers.ts",
+                        "tauria-api/events/Tauri{}WindowEventHandlers.ts",
                         pascal_case_window_name
                     ),
                 );
@@ -517,7 +519,7 @@ mod tests {
         compare_generated_files(
             &output_dir,
             test_case_name,
-            "tauria-api/events/GlobalEventHandlers.ts",
+            "tauria-api/events/TauriGlobalEventHandlers.ts",
         );
         compare_generated_files(
             &output_dir,
