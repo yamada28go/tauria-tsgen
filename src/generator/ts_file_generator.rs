@@ -70,7 +70,7 @@ pub fn generate_event_handler_files(
             let template = std::str::from_utf8(asset.data.as_ref())?;
             let rendered = tera.render_str(template, &context)?;
             let pascal_case_window_name = window_name.to_case(Case::Pascal);
-            let event_handler_dir = output_dir.join("interface").join("events");
+            let event_handler_dir = output_dir.join("tauria-api").join("events");
             std::fs::create_dir_all(&event_handler_dir)?;
             std::fs::write(event_handler_dir.join(format!("{}WindowEventHandlers.ts", pascal_case_window_name)), rendered)?;
         }
