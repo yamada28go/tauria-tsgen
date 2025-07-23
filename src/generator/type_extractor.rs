@@ -217,17 +217,17 @@ pub fn extract_and_convert_types(
 }
 
 pub(crate) fn has_derive_macro(attrs: &[Attribute], macro_name: &str) -> bool {
-    println!("Checking for derive macro: {}", macro_name);
+    println!("Checking for derive macro: {macro_name}");
     attrs.iter().any(|attr| {
         if attr.path().is_ident("derive") {
-            println!("Found derive attribute: {:?}", attr);
+            println!("Found derive attribute: {attr:?}");
             if let Ok(list) = attr.parse_args_with(
                 syn::punctuated::Punctuated::<syn::Path, syn::Token![,]>::parse_terminated,
             ) {
                 let found = list
                     .iter()
                     .any(|path| path.segments.last().is_some_and(|s| s.ident == macro_name));
-                println!("Macro {} found in derive list: {}", macro_name, found);
+                println!("Macro {macro_name} found in derive list: {found}");
                 return found;
             }
         }

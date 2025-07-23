@@ -17,7 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let cli = Cli::parse();
 
     if let Err(e) = run_app(cli) {
-        error!("Application error: {:?}", e);
+        error!("Application error: {e:?}");
         std::process::exit(1);
     }
 

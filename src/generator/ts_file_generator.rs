@@ -98,8 +98,7 @@ pub fn generate_event_handler_files(
             let event_handler_dir = output_dir.join("tauria-api").join("events");
             std::fs::create_dir_all(&event_handler_dir)?;
             std::fs::write(
-                event_handler_dir
-                    .join(format!("{}WindowEventHandlers.ts", pascal_case_window_name)),
+                event_handler_dir.join(format!("{pascal_case_window_name}WindowEventHandlers.ts")),
                 rendered,
             )?;
         }
@@ -108,27 +107,29 @@ pub fn generate_event_handler_files(
     Ok(())
 }
 
+pub type GenerateTsFilesResult = (
+    bool,
+    Vec<crate::generator::type_extractor::ExtractedTypeInfo>,
+    Vec<crate::generator::type_extractor::EventInfo>,
+    Vec<crate::generator::type_extractor::WindowEventInfo>,
+);
+
 pub fn generate_ts_files(
     rust_code: &str,
     output_dir: &Path,
     file_name: &str,
     generate_mock_api: bool,
-) -> anyhow::Result<(
-    bool,
-    Vec<crate::generator::type_extractor::ExtractedTypeInfo>,
-    Vec<crate::generator::type_extractor::EventInfo>,
-    Vec<crate::generator::type_extractor::WindowEventInfo>,
-)> {
+) -> anyhow::Result<GenerateTsFilesResult> {
     let syntax = syn::parse_file(rust_code)?;
     let all_extracted_types = extract_and_convert_types(&syntax.items, file_name);
     let functions = extract_tauri_commands(&syntax.items, &all_extracted_types);
     let (global_events, window_events) = extract_events(&syntax.items, &all_extracted_types);
 
     // デバッグログの追加
-    log::debug!("Extracted types: {:?}", all_extracted_types);
-    log::debug!("Extracted functions (commands): {:?}", functions);
-    log::debug!("Extracted global events: {:?}", global_events);
-    log::debug!("Extracted window events: {:?}", window_events);
+    log::debug!("Extracted types: {all_extracted_types:?}");
+    log::debug!("Extracted functions (commands): {functions:?}");
+    log::debug!("Extracted global events: {global_events:?}");
+    log::debug!("Extracted window events: {window_events:?}");
 
     if functions.is_empty() {
         return Ok((false, all_extracted_types, global_events, window_events));
@@ -187,7 +188,7 @@ pub fn generate_ts_files(
         &has_user_defined_types_in_commands,
     );
 
-    log::debug!("Tera context: {:?}", context);
+    log::debug!("Tera context: {context:?}");
 
     let asset = Asset::get("command_interfaces.tera").unwrap();
     let command_interface_template = std::str::from_utf8(asset.data.as_ref())?;
