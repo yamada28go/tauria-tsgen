@@ -113,7 +113,9 @@ pub fn generate_ts_files(
     context.insert("original_file_name", &file_name);
 
     // ユーザー定義型が存在するかどうかのフラグを追加
-    let has_user_defined_types_in_file = !all_extracted_types.is_empty();
+    let has_user_defined_types_in_file = all_extracted_types
+        .iter()
+        .any(|info| info.is_serializable || info.is_deserializable);
     context.insert("has_user_defined_types_in_file", &has_user_defined_types_in_file);
 
     log::debug!("Tera context: {:?}", context);
