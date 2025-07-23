@@ -112,11 +112,39 @@ pub fn generate_ts_files(
     context.insert("interface_name", &file_name.to_case(Case::Pascal));
     context.insert("original_file_name", &file_name);
 
-    // ユーザー定義型が存在するかどうかのフラグを追加
-    let has_user_defined_types_in_file = all_extracted_types
-        .iter()
-        .any(|info| info.is_serializable || info.is_deserializable);
-    context.insert("has_user_defined_types_in_file", &has_user_defined_types_in_file);
+    let mut has_user_defined_types_in_commands = false;
+    for func in &functions {
+        // 引数にユーザー定義型が含まれているかチェック
+        if let Some(args) = func["args"].as_array() {
+            for arg_str_val in args {
+                if let Some(arg_str) = arg_str_val.as_str() {
+                    // "name: T.MyType" の形式から "MyType" を抽出
+                    if let Some(type_part) = arg_str.split(": ").nth(1) {
+                        if type_part.starts_with("T.") {
+                            let type_name = type_part.trim_start_matches("T.");
+                            if all_extracted_types.iter().any(|info| info.name == type_name && (info.is_serializable || info.is_deserializable)) {
+                                has_user_defined_types_in_commands = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if has_user_defined_types_in_commands { break; }
+
+        // 戻り値にユーザー定義型が含まれているかチェック
+        if let Some(return_type_val) = func["return_type"].as_str() {
+            if return_type_val.starts_with("T.") {
+                let type_name = return_type_val.trim_start_matches("T.");
+                if all_extracted_types.iter().any(|info| info.name == type_name && (info.is_serializable || info.is_deserializable)) {
+                    has_user_defined_types_in_commands = true;
+                    break;
+                }
+            }
+        }
+    }
+    context.insert("has_user_defined_types_in_commands", &has_user_defined_types_in_commands);
 
     log::debug!("Tera context: {:?}", context);
 
