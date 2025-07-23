@@ -47,7 +47,7 @@ pub fn generate_event_handler_files(
 
     if !global_events.is_empty() {
         let mut context = Context::new();
-        context.insert("events", global_events);
+        context.insert("global_events", global_events);
         let asset = Asset::get("global_event_handler.tera").unwrap();
         let template = std::str::from_utf8(asset.data.as_ref())?;
         let rendered = tera.render_str(template, &context)?;
