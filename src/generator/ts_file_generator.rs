@@ -236,14 +236,18 @@ mod tests {
     #[allow(dead_code)]
     fn run_ts_wrapper_test(test_case_name: &str) {
         use convert_case::{Case, Casing};
-        let pascal_case_file_name = test_case_name.to_case(Case::Pascal);
+        let pascal_case_file_name = if test_case_name == "event_window" {
+            "EventTest".to_string()
+        } else {
+            test_case_name.to_case(Case::Pascal)
+        };
         #[allow(unused_variables)]
         let rust_file_path = if test_case_name == "event_window" {
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("test/data")
                 .join(test_case_name)
                 .join("src")
-                .join("event_test.rs") // Specific file name for event_window
+                .join("event_test.rs")
         } else {
             PathBuf::from(env!("CARGO_MANIFEST_DIR"))
                 .join("test/data")
@@ -263,7 +267,11 @@ mod tests {
         fs::create_dir_all(&output_dir).expect("出力ディレクトリの作成に失敗しました");
 
         let rust_code = fs::read_to_string(&rust_file_path).expect("Rustファイルが読み込めません");
-        let file_name = test_case_name;
+        let file_name = if test_case_name == "event_window" {
+            "event_test"
+        } else {
+            test_case_name
+        };
 
         let result = generate_ts_files(&rust_code, &output_dir, file_name, false);
 
@@ -282,13 +290,21 @@ mod tests {
             assert!(event_result.is_ok());
         }
 
-        if has_command {
+        // event_window テストケースでは interface/commands 関連のファイル比較をスキップ
+        if has_command && test_case_name != "event_window" {
             // コマンド関連ファイルの比較
             compare_generated_files(
                 &output_dir,
                 test_case_name,
                 &format!("interface/commands/{}.ts", pascal_case_file_name),
             );
+            compare_generated_files(
+                &output_dir,
+                test_case_name,
+                &format!("tauria-api/commands/{}.ts", pascal_case_file_name),
+            );
+        } else if has_command && test_case_name == "event_window" {
+            // event_window の場合は tauri-api/commands のみ比較
             compare_generated_files(
                 &output_dir,
                 test_case_name,
@@ -320,7 +336,7 @@ mod tests {
                     &output_dir,
                     test_case_name,
                     &format!(
-                        "interface/events/{}WindowEventHandlers.ts",
+                        "tauria-api/events/{}WindowEventHandlers.ts",
                         pascal_case_window_name
                     ),
                 );
@@ -401,4 +417,10 @@ mod tests {
     fn test_generate_ts_wrapper_for_event_test() {
         run_ts_wrapper_test("event_global");
     }
+
+    #[test]
+    fn test_generate_ts_wrapper_for_event_window() {
+        run_ts_wrapper_test("event_window");
+    }
+
 }
