@@ -431,4 +431,9 @@ mod tests {
     fn test_generate_ts_wrapper_for_event_window() {
         run_ts_wrapper_test("event_window");
     }
+
+        #[test]
+    fn test_generate_ts_wrapper_for_event_window_many() {
+        run_ts_wrapper_test("event_window_many");
+    }
 }
