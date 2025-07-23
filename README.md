@@ -51,8 +51,8 @@ You can run the tool by specifying a configuration file or by providing paths di
 
     ```json
     {
-      "input_path": "src/commands.rs",
-      "output_path": "src/tauriCommands.ts"
+      "input_path": "src-tauri/src",
+      "output_path": "src/bindings"
     }
     ```
 

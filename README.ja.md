@@ -49,8 +49,8 @@ cargo run
 
     ```json
     {
-      "input_path": "src/commands.rs",
-      "output_path": "src/tauriCommands.ts"
+      "input_path": "src-tauri/src",
+      "output_path": "src/bindings"
     }
     ```
 
