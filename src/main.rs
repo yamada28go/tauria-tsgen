@@ -11,6 +11,10 @@ use log::{error, info};
 use std::fs;
 use std::path::PathBuf;
 
+/// The main entry point of the application.
+///
+/// Initializes logging and parses command-line arguments. It then calls `run_app`
+/// to execute the core logic and handles any errors that occur.
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("debug")).init();
 
@@ -24,6 +28,19 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     Ok(())
 }
 
+/// Runs the main application logic.
+///
+/// This function orchestrates the process of reading Rust files from the input directory,
+/// generating TypeScript files (interfaces, Tauri API wrappers, event handlers, and index files),
+/// and handling any errors that occur during these operations.
+///
+/// # Arguments
+///
+/// * `cli` - The parsed command-line arguments and configuration.
+///
+/// # Returns
+///
+/// `Ok(())` if the application runs successfully, otherwise an `anyhow::Result` error.
 fn run_app(cli: Cli) -> anyhow::Result<()> {
     let config = load_config(&cli).context("Failed to load configuration")?;
     let input_dir = PathBuf::from(config.input_path);

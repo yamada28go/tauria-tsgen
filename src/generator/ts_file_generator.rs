@@ -10,11 +10,13 @@ use std::path::Path;
 use syn::{Attribute, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat, Type};
 use tera::{Context, Filter, Tera, from_value, to_value};
 
+/// Embeds the `templates/` directory into the binary.
 #[derive(RustEmbed)]
 #[folder = "templates/"]
 pub struct Asset;
 
 #[derive(Debug)]
+/// Tera filter to convert a string to PascalCase.
 pub struct PascalCaseFilter;
 
 impl Filter for PascalCaseFilter {
@@ -29,6 +31,7 @@ impl Filter for PascalCaseFilter {
 }
 
 #[derive(Debug)]
+/// Tera filter to convert a string to camelCase.
 pub struct CamelCaseFilter;
 
 impl Filter for CamelCaseFilter {
@@ -47,6 +50,20 @@ fn register_tera_filters(tera: &mut Tera) {
     tera.register_filter("camelcase", CamelCaseFilter);
 }
 
+/// Generates TypeScript event handler files based on extracted global and window events.
+///
+/// This function uses Tera templates to create TypeScript files that handle
+/// global and window-specific events, including their payloads.
+///
+/// # Arguments
+///
+/// * `output_dir` - The base directory where the generated files will be saved.
+/// * `global_events` - A slice of `EventInfo` representing global events.
+/// * `window_events` - A slice of `WindowEventInfo` representing window-specific events.
+///
+/// # Returns
+///
+/// `Ok(())` if the files are generated successfully, otherwise an `anyhow::Result` error.
 pub fn generate_event_handler_files(
     output_dir: &Path,
     global_events: &[crate::generator::type_extractor::EventInfo],
@@ -107,6 +124,7 @@ pub fn generate_event_handler_files(
     Ok(())
 }
 
+/// The result type for `generate_ts_files`.
 pub type GenerateTsFilesResult = (
     bool,
     Vec<crate::generator::type_extractor::ExtractedTypeInfo>,
@@ -114,6 +132,27 @@ pub type GenerateTsFilesResult = (
     Vec<crate::generator::type_extractor::WindowEventInfo>,
 );
 
+/// Generates TypeScript files (interfaces, Tauri API wrappers, and optionally mock API) from Rust code.
+///
+/// This function parses the given Rust code, extracts Tauri commands and types,
+/// and then uses Tera templates to generate corresponding TypeScript files.
+///
+/// # Arguments
+///
+/// * `rust_code` - A string slice containing the Rust source code.
+/// * `output_dir` - The base directory where the generated files will be saved.
+/// * `file_name` - The base name of the Rust file (without extension), used for naming generated TypeScript files.
+/// * `generate_mock_api` - A boolean indicating whether to generate mock API files.
+///
+/// # Returns
+///
+/// A `GenerateTsFilesResult` tuple containing:
+/// - `bool`: `true` if commands were found and files were generated, `false` otherwise.
+/// - `Vec<ExtractedTypeInfo>`: All extracted user-defined types.
+/// - `Vec<EventInfo>`: All extracted global events.
+/// - `Vec<WindowEventInfo>`: All extracted window-specific events.
+///
+/// Returns an `anyhow::Result` error if parsing or file generation fails.
 pub fn generate_ts_files(
     rust_code: &str,
     output_dir: &Path,

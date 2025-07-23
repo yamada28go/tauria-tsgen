@@ -14,6 +14,9 @@ use tera::{Context, Tera};
 ///
 /// * `output_dir` - The root directory where the `index.ts` files will be created.
 /// * `file_names` - A mutable vector of strings containing the base names of the generated command files. This vector will be sorted internally.
+/// * `generate_mock_api` - A boolean indicating whether mock API index files should be generated.
+/// * `global_events` - A slice of `EventInfo` representing global events, used to determine if global event handlers should be exported.
+/// * `window_events` - A slice of `WindowEventInfo` representing window-specific events, used to determine if window event handlers should be exported.
 ///
 /// # Returns
 ///
@@ -115,6 +118,21 @@ export * from "./tauria-api";
     Ok(())
 }
 
+/// Generates an `index.ts` file for user-defined types within the `interface/types` directory.
+///
+/// This function collects all extracted user-defined types (structs and enums)
+/// that are marked as serializable or deserializable and generates their TypeScript
+/// interfaces/enums into a single `index.ts` file. This allows for easy import
+/// of all user-defined types from a single entry point.
+///
+/// # Arguments
+///
+/// * `output_dir` - The root output directory where the `interface/types/index.ts` file will be created.
+/// * `all_extracted_types` - A slice of `ExtractedTypeInfo` containing all extracted user-defined types.
+///
+/// # Returns
+///
+/// An `anyhow::Result` indicating whether the operation was successful.
 pub fn generate_user_types_index_file(
     output_dir: &Path,
     all_extracted_types: &[crate::generator::type_extractor::ExtractedTypeInfo],

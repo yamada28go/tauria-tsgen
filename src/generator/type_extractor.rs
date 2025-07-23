@@ -15,12 +15,14 @@ const IGNORED_TAURI_TYPES: &[&str] = &[
 ];
 
 #[derive(Debug, Clone, serde::Serialize)]
+/// Represents information about a global event emitted in Tauri.
 pub struct EventInfo {
     pub event_name: String,
     pub payload_type: String,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
+/// Represents information about a window-specific event emitted in Tauri.
 pub struct WindowEventInfo {
     pub window_name: String,
     pub event_name: String,
@@ -112,6 +114,19 @@ fn payload_type_from_expr(
     }
 }
 
+/// Extracts global and window-specific events from the given Rust items.
+///
+/// This function traverses the AST to find `emit` and `emit_to` calls,
+/// extracting event names and their payload types.
+///
+/// # Arguments
+///
+/// * `items` - A slice of `syn::Item` representing the parsed Rust code.
+/// * `all_extracted_types` - A slice of `ExtractedTypeInfo` containing all user-defined types.
+///
+/// # Returns
+///
+/// A tuple containing two vectors: `Vec<EventInfo>` for global events and `Vec<WindowEventInfo>` for window events.
 pub fn extract_events(
     items: &[Item],
     all_extracted_types: &[ExtractedTypeInfo],
@@ -148,6 +163,7 @@ pub fn extract_events(
 }
 
 #[derive(Debug)]
+/// Represents information about an extracted Rust type (struct or enum) for TypeScript generation.
 pub struct ExtractedTypeInfo {
     pub name: String,
     pub ts_interface: serde_json::Value,
@@ -216,6 +232,7 @@ pub fn extract_and_convert_types(
     extracted_types
 }
 
+/// Checks if a given attribute list contains a specific derive macro.
 pub(crate) fn has_derive_macro(attrs: &[Attribute], macro_name: &str) -> bool {
     println!("Checking for derive macro: {macro_name}");
     attrs.iter().any(|attr| {
@@ -235,6 +252,7 @@ pub(crate) fn has_derive_macro(attrs: &[Attribute], macro_name: &str) -> bool {
     })
 }
 
+/// Converts a Rust `ItemStruct` into a `serde_json::Value` representation for TypeScript interface generation.
 pub(crate) fn convert_struct_to_ts_interface(
     s: &ItemStruct,
     defined_types: &[String],
@@ -264,6 +282,7 @@ pub(crate) fn convert_struct_to_ts_interface(
     })
 }
 
+/// Converts a Rust `ItemEnum` into a `serde_json::Value` representation for TypeScript enum generation.
 pub(crate) fn convert_enum_to_ts_enum(e: &ItemEnum, defined_types: &[String]) -> serde_json::Value {
     let enum_name = e.ident.to_string();
     let doc_comment = extract_doc_comments(&e.attrs);
@@ -341,6 +360,7 @@ pub(crate) fn convert_enum_to_ts_enum(e: &ItemEnum, defined_types: &[String]) ->
     })
 }
 
+/// Converts a Rust `syn::Type` into its corresponding TypeScript type string.
 pub(crate) fn type_to_ts(
     ty: &Type,
     defined_types: &[String],
@@ -509,6 +529,20 @@ fn parse_use_tree(
 ///
 /// * `items` - A slice of `syn::Item` representing the parsed Rust code.
 /// * `defined_types` - A slice of strings containing the names of user-defined types.
+///
+/// # Returns
+///
+/// A vector of `serde_json::Value` representing the extracted Tauri commands.
+/// Extracts Tauri commands from the given Rust items.
+///
+/// This function iterates through the given Rust items and extracts any functions
+/// marked with the `#[tauri::command]` attribute. It then converts them into a
+/// `serde_json::Value` representation for TypeScript generation.
+///
+/// # Arguments
+///
+/// * `items` - A slice of `syn::Item` representing the parsed Rust code.
+/// * `all_extracted_types` - A slice of `ExtractedTypeInfo` containing all user-defined types.
 ///
 /// # Returns
 ///
@@ -747,6 +781,7 @@ fn is_tauri_ipc_response(ty: &Type, aliases: &HashMap<String, String>) -> bool {
     }
 }
 
+/// Checks if a given attribute list contains a `#[tauri::command]` or `#[command]` attribute.
 pub(crate) fn has_tauri_command(attrs: &[Attribute]) -> bool {
     attrs.iter().any(|attr| {
         let path = attr.path();
