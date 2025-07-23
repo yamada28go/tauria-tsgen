@@ -3,8 +3,7 @@ use serde_json;
 use std::collections::HashMap;
 use syn::{
     Attribute, Expr, ExprMethodCall, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat,
-    Type,
-    UseTree,
+    Type, UseTree,
     visit::{self, Visit},
 };
 
@@ -159,7 +158,10 @@ pub struct ExtractedTypeInfo {
 /// # Returns
 ///
 /// A vector of `ExtractedTypeInfo` representing the extracted TypeScript interfaces with serialization/deserialization info.
-pub fn extract_and_convert_types(items: &[Item], original_file_name: &str) -> Vec<ExtractedTypeInfo> {
+pub fn extract_and_convert_types(
+    items: &[Item],
+    original_file_name: &str,
+) -> Vec<ExtractedTypeInfo> {
     let mut extracted_types = Vec::new();
     let mut defined_types_names = Vec::new(); // Keep track of defined type names for type_to_ts
 

@@ -60,7 +60,12 @@ pub fn generate_index_files(
 
     let mut tauri_api_index_content = file_names
         .iter()
-        .map(|name| format!("export * from \"./commands/{}\";", name.to_case(Case::Pascal))) // 変更
+        .map(|name| {
+            format!(
+                "export * from \"./commands/{}\";",
+                name.to_case(Case::Pascal)
+            )
+        }) // 変更
         .collect::<Vec<_>>()
         .join("\n");
 
@@ -69,11 +74,17 @@ pub fn generate_index_files(
     }
 
     if !window_events.is_empty() {
-        let mut unique_window_names: Vec<String> = window_events.iter().map(|e| e.window_name.clone()).collect();
+        let mut unique_window_names: Vec<String> = window_events
+            .iter()
+            .map(|e| e.window_name.clone())
+            .collect();
         unique_window_names.sort();
         unique_window_names.dedup();
         for window_name in unique_window_names {
-            tauri_api_index_content.push_str(&format!("\nexport * from \"./events/{}WindowEventHandlers\";", window_name.to_case(Case::Pascal)));
+            tauri_api_index_content.push_str(&format!(
+                "\nexport * from \"./events/{}WindowEventHandlers\";",
+                window_name.to_case(Case::Pascal)
+            ));
         }
     }
 

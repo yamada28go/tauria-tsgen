@@ -1,12 +1,14 @@
+use crate::generator::type_extractor::{
+    extract_and_convert_types, extract_events, extract_tauri_commands,
+};
+use convert_case::{Case, Casing};
 use log::info;
 use rust_embed::RustEmbed;
+use std::collections::HashMap;
 use std::path::Path;
 #[allow(unused_imports)]
 use syn::{Attribute, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat, Type};
-use tera::{Context, Tera, Filter, from_value, to_value};
-use convert_case::{Case, Casing};
-use crate::generator::type_extractor::{extract_and_convert_types, extract_tauri_commands, extract_events};
-use std::collections::HashMap;
+use tera::{Context, Filter, Tera, from_value, to_value};
 
 #[derive(RustEmbed)]
 #[folder = "templates/"]
@@ -16,7 +18,11 @@ pub struct Asset;
 pub struct PascalCaseFilter;
 
 impl Filter for PascalCaseFilter {
-    fn filter(&self, value: &tera::Value, _: &HashMap<String, tera::Value>) -> tera::Result<tera::Value> {
+    fn filter(
+        &self,
+        value: &tera::Value,
+        _: &HashMap<String, tera::Value>,
+    ) -> tera::Result<tera::Value> {
         let s = from_value::<String>(value.clone())?;
         Ok(to_value(s.to_case(Case::Pascal))?)
     }
@@ -26,7 +32,11 @@ impl Filter for PascalCaseFilter {
 pub struct CamelCaseFilter;
 
 impl Filter for CamelCaseFilter {
-    fn filter(&self, value: &tera::Value, _: &HashMap<String, tera::Value>) -> tera::Result<tera::Value> {
+    fn filter(
+        &self,
+        value: &tera::Value,
+        _: &HashMap<String, tera::Value>,
+    ) -> tera::Result<tera::Value> {
         let s = from_value::<String>(value.clone())?;
         Ok(to_value(s.to_case(Case::Camel))?)
     }
@@ -57,12 +67,18 @@ pub fn generate_event_handler_files(
     }
 
     if !window_events.is_empty() {
-        let mut unique_window_names: Vec<String> = window_events.iter().map(|e| e.window_name.clone()).collect();
+        let mut unique_window_names: Vec<String> = window_events
+            .iter()
+            .map(|e| e.window_name.clone())
+            .collect();
         unique_window_names.sort();
         unique_window_names.dedup();
 
         for window_name in unique_window_names {
-            let events_for_window: Vec<_> = window_events.iter().filter(|e| e.window_name == window_name).collect();
+            let events_for_window: Vec<_> = window_events
+                .iter()
+                .filter(|e| e.window_name == window_name)
+                .collect();
             let mut context = Context::new();
             context.insert("window_name", &window_name);
             context.insert("events", &events_for_window);
@@ -72,7 +88,11 @@ pub fn generate_event_handler_files(
             let pascal_case_window_name = window_name.to_case(Case::Pascal);
             let event_handler_dir = output_dir.join("tauria-api").join("events");
             std::fs::create_dir_all(&event_handler_dir)?;
-            std::fs::write(event_handler_dir.join(format!("{}WindowEventHandlers.ts", pascal_case_window_name)), rendered)?;
+            std::fs::write(
+                event_handler_dir
+                    .join(format!("{}WindowEventHandlers.ts", pascal_case_window_name)),
+                rendered,
+            )?;
         }
     }
 
@@ -124,7 +144,10 @@ pub fn generate_ts_files(
                     if let Some(type_part) = arg_str.split(": ").nth(1) {
                         if type_part.starts_with("T.") {
                             let type_name = type_part.trim_start_matches("T.");
-                            if all_extracted_types.iter().any(|info| info.name == type_name && (info.is_serializable || info.is_deserializable)) {
+                            if all_extracted_types.iter().any(|info| {
+                                info.name == type_name
+                                    && (info.is_serializable || info.is_deserializable)
+                            }) {
                                 has_user_defined_types_in_commands = true;
                                 break;
                             }
@@ -133,20 +156,27 @@ pub fn generate_ts_files(
                 }
             }
         }
-        if has_user_defined_types_in_commands { break; }
+        if has_user_defined_types_in_commands {
+            break;
+        }
 
         // 戻り値にユーザー定義型が含まれているかチェック
         if let Some(return_type_val) = func["return_type"].as_str() {
             if return_type_val.starts_with("T.") {
                 let type_name = return_type_val.trim_start_matches("T.");
-                if all_extracted_types.iter().any(|info| info.name == type_name && (info.is_serializable || info.is_deserializable)) {
+                if all_extracted_types.iter().any(|info| {
+                    info.name == type_name && (info.is_serializable || info.is_deserializable)
+                }) {
                     has_user_defined_types_in_commands = true;
                     break;
                 }
             }
         }
     }
-    context.insert("has_user_defined_types_in_commands", &has_user_defined_types_in_commands);
+    context.insert(
+        "has_user_defined_types_in_commands",
+        &has_user_defined_types_in_commands,
+    );
 
     log::debug!("Tera context: {:?}", context);
 
@@ -159,7 +189,10 @@ pub fn generate_ts_files(
         interface_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
         rendered_interface,
     )?;
-    info!("Generated interface file: {}.ts", file_name.to_case(Case::Pascal));
+    info!(
+        "Generated interface file: {}.ts",
+        file_name.to_case(Case::Pascal)
+    );
 
     let asset = Asset::get("tauria_api.tera").unwrap();
     let tauri_api_template = std::str::from_utf8(asset.data.as_ref())?;
@@ -170,7 +203,10 @@ pub fn generate_ts_files(
         tauri_api_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
         rendered_tauri_api,
     )?;
-    info!("Generated tauri-api file: {}.ts", file_name.to_case(Case::Pascal));
+    info!(
+        "Generated tauri-api file: {}.ts",
+        file_name.to_case(Case::Pascal)
+    );
 
     if generate_mock_api {
         let asset = Asset::get("mock_api.tera").unwrap();
@@ -182,12 +218,14 @@ pub fn generate_ts_files(
             mock_api_dir.join(format!("{}.ts", file_name.to_case(Case::Pascal))),
             rendered_mock_api,
         )?;
-        info!("Generated mock-api file: {}.ts", file_name.to_case(Case::Pascal));
+        info!(
+            "Generated mock-api file: {}.ts",
+            file_name.to_case(Case::Pascal)
+        );
     }
 
     Ok((true, all_extracted_types, global_events, window_events))
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -269,7 +307,10 @@ mod tests {
 
         if !window_events.is_empty() {
             // ウィンドウイベントハンドラファイルの比較
-            let mut window_names: Vec<_> = window_events.iter().map(|e| e.window_name.clone()).collect();
+            let mut window_names: Vec<_> = window_events
+                .iter()
+                .map(|e| e.window_name.clone())
+                .collect();
             window_names.sort();
             window_names.dedup();
 
