@@ -17,6 +17,8 @@ export interface Append {
 }
 
 
+//- Generated from nesting_type_test.rs
+
 export interface AppendEx {
 
 
@@ -28,6 +30,8 @@ export interface AppendEx {
 
 }
 
+
+//- Generated from nesting_type_test.rs
 
 export interface Data {
 
@@ -45,6 +49,8 @@ export interface Data {
 
 }
 
+
+//- Generated from nesting_type_test.rs
 
 export enum Message {
 

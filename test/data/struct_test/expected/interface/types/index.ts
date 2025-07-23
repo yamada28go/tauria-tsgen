@@ -22,6 +22,8 @@ export interface Product {
 }
 
 
+//- Generated from struct_test.rs
+
 export interface User {
 
 

@@ -17,10 +17,10 @@ export interface IBasic {
 
     /**
 * * @brief Gets a user by ID.* * @param id The ID of the user.* * @returns The user with the specified ID.*/
-    get_user(id: number): Promise<string>;
+    getUser(id: number): Promise<string>;
 
     /**
 * * @brief Updates a user.* * @param user_name The name of the user to update.* * @returns A message indicating the user has been updated.*/
-    update_user(user_name: string): Promise<string>;
+    updateUser(user_name: string): Promise<string>;
 
 }

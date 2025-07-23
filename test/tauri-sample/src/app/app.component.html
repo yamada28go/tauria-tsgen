@@ -1,0 +1,144 @@
+<main class="container">
+  <h1>tauria-tsgen test</h1>
+
+  <mat-accordion>
+    <!-- Basic Command -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> 基本的なコマンド (greet_command) </mat-panel-title>
+      </mat-expansion-panel-header>
+      <form class="column-form" (submit)="greet()">
+        <mat-form-field appearance="fill" class="input-field">
+          <mat-label>Greet Name</mat-label>
+          <input matInput [(ngModel)]="greetName" name="greetName" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit">Greet</button>
+      </form>
+      <p><strong>Message:</strong> {{ greetMessage }}</p>
+    </mat-expansion-panel>
+
+    <!-- Command with User-Defined Type -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          ユーザー定義型を引数に取るコマンド (multiplication_command)
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <form class="column-form" (submit)="multiplication()">
+        <mat-form-field appearance="fill" class="input-field">
+          <mat-label>Number A</mat-label>
+          <input matInput type="number" [(ngModel)]="multiplicationA" name="multiplicationA" />
+        </mat-form-field>
+        <mat-form-field appearance="fill" class="input-field">
+          <mat-label>Number B</mat-label>
+          <input matInput type="number" [(ngModel)]="multiplicationB" name="multiplicationB" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit">Multiply</button>
+      </form>
+      <p><strong>Result:</strong> {{ multiplicationResult }}</p>
+    </mat-expansion-panel>
+
+    <!-- Error Handling Command -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> エラーハンドリング (error_handling_command) </mat-panel-title>
+      </mat-expansion-panel-header>
+      <form class="column-form" (submit)="testError()">
+        <mat-checkbox [(ngModel)]="isError" name="isError">Trigger Error</mat-checkbox>
+        <button mat-raised-button color="primary" type="submit">Test Error</button>
+      </form>
+      <p><strong>Result:</strong> {{ errorMessage }}</p>
+    </mat-expansion-panel>
+
+    <!-- Command with ipc::Response -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> ipc::Response を返すコマンド (read_file_command) </mat-panel-title>
+      </mat-expansion-panel-header>
+      <form class="column-form" (submit)="readFile()">
+        <button mat-raised-button color="primary" type="submit">Read File</button>
+      </form>
+      <p><strong>File Content:</strong></p>
+      <pre>{{ fileContent }}</pre>
+    </mat-expansion-panel>
+
+    <!-- Tauri Handle Commands -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> Tauri ハンドルを引数に取るコマンド </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <!-- App Handle -->
+      <form class="column-form" (submit)="getBundleIdentifier()">
+        <button mat-raised-button color="primary" type="submit">
+          Get Bundle Identifier (app_handle_command)
+        </button>
+      </form>
+      <p><strong>Bundle Identifier:</strong> {{ bundleIdentifier }}</p>
+
+      <!-- Webview Window -->
+      <form class="column-form" (submit)="getWebviewLabel()">
+        <button mat-raised-button color="primary" type="submit">
+          Get Webview Label (webview_window_command)
+        </button>
+      </form>
+      <p><strong>Webview Label:</strong> {{ webviewLabel }}</p>
+
+      <!-- Webview Window with Arg -->
+      <form class="column-form" (submit)="getWebviewLabelWithArg()">
+        <mat-form-field appearance="fill" class="input-field">
+          <mat-label>Name</mat-label>
+          <input matInput [(ngModel)]="webviewLabelWithArgName" name="webviewLabelWithArgName" />
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit">
+          Get Webview Label with Arg (webview_window_with_arg_command)
+        </button>
+      </form>
+      <p><strong>Result:</strong> {{ webviewLabelWithArg }}</p>
+    </mat-expansion-panel>
+
+    <!-- Command with Complex State -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> 複雑な状態を扱うコマンド (complex_state_command) </mat-panel-title>
+      </mat-expansion-panel-header>
+      <form class="column-form" (submit)="getComplexState()">
+        <mat-form-field appearance="fill" class="input-field">
+          <mat-label>Number</mat-label>
+          <input
+            matInput
+            type="number"
+            [(ngModel)]="complexStateNumber"
+            name="complexStateNumber"
+          />
+        </mat-form-field>
+        <button mat-raised-button color="primary" type="submit">Get Complex State</button>
+      </form>
+      <p><strong>Result:</strong></p>
+      <pre>{{ complexStateResult }}</pre>
+    </mat-expansion-panel>
+
+    <!-- Event Commands -->
+    <mat-expansion-panel>
+      <mat-expansion-panel-header>
+        <mat-panel-title> イベント関連コマンド </mat-panel-title>
+      </mat-expansion-panel-header>
+
+      <!-- call_msg_global -->
+      <form class="column-form" (submit)="callMsgGlobal()">
+        <button mat-raised-button color="primary" type="submit">
+          Call Global Message (call_msg_global)
+        </button>
+      </form>
+      <p><strong>Result:</strong> {{ callMsgGlobalResult }}</p>
+
+      <!-- call_msg_main -->
+      <form class="column-form" (submit)="callMsgMain()">
+        <button mat-raised-button color="primary" type="submit">
+          Call Main Message (call_msg_main)
+        </button>
+      </form>
+      <p><strong>Result:</strong> {{ callMsgMainResult }}</p>
+    </mat-expansion-panel>
+  </mat-accordion>
+</main>

@@ -9,6 +9,6 @@ export interface IWindow {
 
     /**
 **/
-    my_custom_command(): Promise<void>;
+    myCustomCommand(): Promise<void>;
 
 }

@@ -17,6 +17,9 @@
 -   **特殊な戻り値の型安全な変換:**
     -   `tauri::ipc::Response` 型を戻り値とするRustコマンドに対しては、TypeScript側で `unknown` 型を生成します。これにより、低レベルなIPCレスポンスの具体的な型を開発者が明示的にキャストすることを促し、型安全性を維持します。
 
+-   **イベントハンドラの自動生成:**
+    -   グローバルおよびウィンドウ固有のTauriイベントに対して、型安全なTypeScriptイベントハンドラを自動生成し、フロントエンドでのイベント購読と処理を簡素化します。
+
 -   **ディレクトリ構造の維持とモック機能:**
     -   Rustのディレクトリ構造を維持した形でTypeScriptの関数を対応付けて出力します。
     -   各TypeScriptクラスには、JSONデータを読み込み、モック動作が可能な機能を備える予定です。
@@ -49,8 +52,8 @@ cargo run
 
     ```json
     {
-      "input_path": "src/commands.rs",
-      "output_path": "src/tauriCommands.ts"
+      "input_path": "src-tauri/src",
+      "output_path": "src/bindings"
     }
     ```
 

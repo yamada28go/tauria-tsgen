@@ -1,0 +1,4 @@
+{
+  "input_path": "src-tauri/src",
+  "output_path": "src/app/external/tauri-api" 
+}

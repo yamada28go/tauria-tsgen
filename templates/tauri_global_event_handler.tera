@@ -1,0 +1,26 @@
+import { Event, listen, UnlistenFn } from "@tauri-apps/api/event";
+
+{% if has_user_defined_types_in_global_events %}
+import * as T from "../../interface/types/index"
+{% endif %}
+
+export abstract class TauriGlobalEventHandlers {
+    private readonly unlistenFns: Promise<UnlistenFn>[] = [];
+
+    protected constructor() {
+        {% for event in global_events %}
+        this.unlistenFns.push(
+            listen<{{ event.payload_type }}>('{{ event.event_name }}', (event) => { this.On{{ event.event_name | pascalcase }}(event); }));
+        {% endfor %}
+    }
+
+    public async Unlisten() {
+        for (const x of this.unlistenFns) {
+            await x;
+        }
+    }
+
+    {% for event in global_events %}
+    abstract On{{ event.event_name | pascalcase }}(event: Event<{{ event.payload_type }}>): void;
+    {% endfor %}
+}

@@ -14,6 +14,9 @@ use tera::{Context, Tera};
 ///
 /// * `output_dir` - The root directory where the `index.ts` files will be created.
 /// * `file_names` - A mutable vector of strings containing the base names of the generated command files. This vector will be sorted internally.
+/// * `generate_mock_api` - A boolean indicating whether mock API index files should be generated.
+/// * `global_events` - A slice of `EventInfo` representing global events, used to determine if global event handlers should be exported.
+/// * `window_events` - A slice of `WindowEventInfo` representing window-specific events, used to determine if window event handlers should be exported.
 ///
 /// # Returns
 ///
@@ -23,6 +26,8 @@ pub fn generate_index_files(
     output_dir: &Path,
     file_names: &mut Vec<String>,
     generate_mock_api: bool,
+    global_events: &[crate::generator::type_extractor::EventInfo],
+    window_events: &[crate::generator::type_extractor::WindowEventInfo],
 ) -> anyhow::Result<()> {
     std::fs::create_dir_all(output_dir)?;
     file_names.sort();
@@ -56,11 +61,36 @@ pub fn generate_index_files(
     }
     std::fs::write(interface_dir.join("index.ts"), interface_index_content)?;
 
-    let tauri_api_index_content = file_names
+    let mut tauri_api_index_content = file_names
         .iter()
-        .map(|name| format!("export * from \"./{}\";", name.to_case(Case::Pascal)))
+        .map(|name| {
+            format!(
+                "export * from \"./commands/{}\";",
+                name.to_case(Case::Pascal)
+            )
+        }) // 変更
         .collect::<Vec<_>>()
         .join("\n");
+
+    if !global_events.is_empty() {
+        tauri_api_index_content.push_str("\nexport * from \"./events/TauriGlobalEventHandlers\";"); // "event" から "events" に変更
+    }
+
+    if !window_events.is_empty() {
+        let mut unique_window_names: Vec<String> = window_events
+            .iter()
+            .map(|e| e.window_name.clone())
+            .collect();
+        unique_window_names.sort();
+        unique_window_names.dedup();
+        for window_name in unique_window_names {
+            tauri_api_index_content.push_str(&format!(
+                "\nexport * from \"./events/Tauri{}WindowEventHandlers\";",
+                window_name.to_case(Case::Pascal)
+            ));
+        }
+    }
+
     std::fs::write(tauri_api_dir.join("index.ts"), tauri_api_index_content)?;
 
     if generate_mock_api {
@@ -88,6 +118,21 @@ export * from "./tauria-api";
     Ok(())
 }
 
+/// Generates an `index.ts` file for user-defined types within the `interface/types` directory.
+///
+/// This function collects all extracted user-defined types (structs and enums)
+/// that are marked as serializable or deserializable and generates their TypeScript
+/// interfaces/enums into a single `index.ts` file. This allows for easy import
+/// of all user-defined types from a single entry point.
+///
+/// # Arguments
+///
+/// * `output_dir` - The root output directory where the `interface/types/index.ts` file will be created.
+/// * `all_extracted_types` - A slice of `ExtractedTypeInfo` containing all extracted user-defined types.
+///
+/// # Returns
+///
+/// An `anyhow::Result` indicating whether the operation was successful.
 pub fn generate_user_types_index_file(
     output_dir: &Path,
     all_extracted_types: &[crate::generator::type_extractor::ExtractedTypeInfo],
@@ -121,7 +166,7 @@ pub fn generate_user_types_index_file(
 
         all_types_content.push_str(&format!(
             "//- Generated from {}.rs\n",
-            extracted_type_info.name
+            extracted_type_info.original_file_name
         ));
         let mut context = Context::new();
         context.insert("ts_interface", &extracted_type_info.ts_interface);
@@ -163,7 +208,7 @@ mod tests {
         create_dummy_file(&types_dir, "index.ts", "export interface MyType {};");
 
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         let interface_index_content = fs::read_to_string(interface_dir.join("index.ts"))
@@ -180,7 +225,7 @@ mod tests {
         create_dummy_file(&types_dir, "index.ts", ""); // Empty content
 
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         let interface_index_content = fs::read_to_string(interface_dir.join("index.ts"))
@@ -194,7 +239,7 @@ mod tests {
         // Do not create types/index.ts
 
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         let interface_dir = output_dir.path().join("interface");
@@ -207,7 +252,7 @@ mod tests {
     fn test_generate_index_files_no_mock_api() {
         let output_dir = tempdir().expect("Failed to create temp dir");
         let mut file_names = vec!["test_file".to_string()];
-        generate_index_files(output_dir.path(), &mut file_names, false)
+        generate_index_files(output_dir.path(), &mut file_names, false, &[], &[])
             .expect("Failed to generate index files");
 
         assert!(!output_dir.path().join("mock-api").exists());
@@ -240,12 +285,14 @@ mod tests {
                 ts_interface: json!({}),
                 is_serializable: false,
                 is_deserializable: false,
+                original_file_name: "file1".to_string(),
             },
             ExtractedTypeInfo {
                 name: "file2".to_string(),
                 ts_interface: json!({"name": "MyType", "type": "interface"}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "file2".to_string(),
             },
         ];
 
@@ -273,12 +320,14 @@ mod tests {
                 ts_interface: json!({"name": "TypeB", "type": "interface", "fields": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "file_b".to_string(),
             },
             ExtractedTypeInfo {
                 name: "file_a".to_string(),
                 ts_interface: json!({"name": "TypeA", "type": "interface", "fields": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "file_a".to_string(),
             },
         ];
         all_ts_interfaces.sort_by(|a, b| a.name.cmp(&b.name));
@@ -324,12 +373,14 @@ export interface TypeB {
                 ts_interface: json!({"name": "MyStruct", "type": "interface", "fields": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "my_types".to_string(),
             },
             ExtractedTypeInfo {
                 name: "my_types".to_string(),
                 ts_interface: json!({"name": "MyEnum", "type": "enum", "variants": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "my_types".to_string(),
             },
         ];
 
@@ -365,7 +416,7 @@ export interface TypeB {
             "m_file".to_string(),
         ];
 
-        generate_index_files(&output_dir, &mut file_names, true)
+        generate_index_files(&output_dir, &mut file_names, true, &[], &[])
             .expect("indexファイルの生成に失敗しました");
 
         let interface_index_content =
@@ -387,8 +438,7 @@ export interface TypeB {
         );
 
         // tauria-api/index.ts のソート順を確認
-        let expected_tauri_api_content =
-            "export * from \"./AFile\";\nexport * from \"./MFile\";\nexport * from \"./ZFile\";";
+        let expected_tauri_api_content = "export * from \"./commands/AFile\";\nexport * from \"./commands/MFile\";\nexport * from \"./commands/ZFile\";";
         assert_eq!(
             tauri_api_index_content.trim().replace("\r\n", "\n"),
             expected_tauri_api_content.trim().replace("\r\n", "\n"),

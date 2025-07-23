@@ -11,6 +11,6 @@ export interface INestingTypeTest {
 
     /**
 * * @brief Processes a given message.* * @param msg The message to process.* * @returns A string indicating the processed message.*/
-    process_message(msg: T.Data): Promise<string>;
+    processMessage(msg: T.Data): Promise<string>;
 
 }

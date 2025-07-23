@@ -3,7 +3,7 @@
 // Manually modifying it may break the interface and lead to unintended consequences. 
 // Please exercise great caution if you choose to make manual changes.
 
-{% if has_user_defined_types_in_file %}
+{% if has_user_defined_types_in_commands %}
 import * as T from "../types/index"
 {% endif %}
 
@@ -21,6 +21,6 @@ export interface I{{ interface_name }} {
 {%- endif -%}
 {% endfor -%}
      */
-    {{ func.name }}({{ func.args | join(sep = ", ")}}): Promise<{{ func.return_type }}>;
+    {{ func.name | camelcase }}({{ func.args | join(sep = ", ")}}): Promise<{{ func.return_type }}>;
 {% endfor %}
 }

@@ -1,1 +1,1 @@
-export * from "./AppHandle";
+export * from "./commands/AppHandle";

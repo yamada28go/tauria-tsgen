@@ -1,1 +1,1 @@
-export * from "./StructTest";
+export * from "./commands/StructTest";

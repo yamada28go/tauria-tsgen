@@ -5,24 +5,42 @@ use anyhow::Context;
 use clap::Parser;
 use cli::{Cli, load_config};
 use generator::index_file_generator::{generate_index_files, generate_user_types_index_file};
+use generator::ts_file_generator::generate_event_handler_files;
 use generator::ts_file_generator::generate_ts_files;
 use log::{error, info};
 use std::fs;
 use std::path::PathBuf;
 
+/// The main entry point of the application.
+///
+/// Initializes logging and parses command-line arguments. It then calls `run_app`
+/// to execute the core logic and handles any errors that occur.
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or("info")).init();
 
     let cli = Cli::parse();
 
     if let Err(e) = run_app(cli) {
-        error!("Application error: {e}");
+        error!("Application error: {e:?}");
         std::process::exit(1);
     }
 
     Ok(())
 }
 
+/// Runs the main application logic.
+///
+/// This function orchestrates the process of reading Rust files from the input directory,
+/// generating TypeScript files (interfaces, Tauri API wrappers, event handlers, and index files),
+/// and handling any errors that occur during these operations.
+///
+/// # Arguments
+///
+/// * `cli` - The parsed command-line arguments and configuration.
+///
+/// # Returns
+///
+/// `Ok(())` if the application runs successfully, otherwise an `anyhow::Result` error.
 fn run_app(cli: Cli) -> anyhow::Result<()> {
     let config = load_config(&cli).context("Failed to load configuration")?;
     let input_dir = PathBuf::from(config.input_path);
@@ -39,6 +57,8 @@ fn run_app(cli: Cli) -> anyhow::Result<()> {
     let mut file_names = Vec::new();
     let mut all_ts_interfaces: Vec<crate::generator::type_extractor::ExtractedTypeInfo> =
         Vec::new();
+    let mut all_global_events: Vec<crate::generator::type_extractor::EventInfo> = Vec::new();
+    let mut all_window_events: Vec<crate::generator::type_extractor::WindowEventInfo> = Vec::new();
 
     for entry in fs::read_dir(&input_dir).context("Failed to read input directory")? {
         let entry = entry.context("Failed to read directory entry")?;
@@ -56,10 +76,12 @@ fn run_app(cli: Cli) -> anyhow::Result<()> {
                 .ok_or_else(|| anyhow::anyhow!("Invalid file name: {}", path.display()))?;
             dbg!(&file_name);
 
-            let (has_command, ts_interfaces) =
+            let (has_command, ts_interfaces, global_events, window_events) =
                 generate_ts_files(&code, &output_dir, file_name, cli.mock_api)
                     .context("Failed to generate TypeScript wrapper")?;
             all_ts_interfaces.extend(ts_interfaces);
+            all_global_events.extend(global_events);
+            all_window_events.extend(window_events);
 
             if has_command {
                 file_names.push(file_name.to_string());
@@ -73,12 +95,20 @@ fn run_app(cli: Cli) -> anyhow::Result<()> {
         }
     }
 
+    generate_event_handler_files(&output_dir, &all_global_events, &all_window_events)?;
+
     file_names.sort();
     all_ts_interfaces.sort_by(|a, b| a.name.cmp(&b.name));
 
     generate_user_types_index_file(&output_dir, &all_ts_interfaces)?;
 
-    generate_index_files(&output_dir, &mut file_names, cli.mock_api)?;
+    generate_index_files(
+        &output_dir,
+        &mut file_names,
+        cli.mock_api,
+        &all_global_events,
+        &all_window_events,
+    )?;
 
     info!("✅ Tauri wrapper generation completed.");
     Ok(())
@@ -127,6 +157,7 @@ mod tests {
             output_dir
                 .path()
                 .join("tauria-api")
+                .join("commands")
                 .join("TestCommands.ts")
                 .exists()
         );

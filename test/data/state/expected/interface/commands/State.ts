@@ -9,14 +9,14 @@ export interface IState {
 
     /**
 **/
-    test_state(): Promise<void>;
+    testState(): Promise<void>;
 
     /**
 **/
-    test_state2(name: string): Promise<void>;
+    testState2(name: string): Promise<void>;
 
     /**
 **/
-    test_state3(name: string): Promise<void>;
+    testState3(name: string): Promise<void>;
 
 }

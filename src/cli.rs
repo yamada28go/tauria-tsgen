@@ -3,6 +3,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::fs;
 
+/// Command-line interface (CLI) arguments for the tauria-tsgen application.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
@@ -25,6 +26,7 @@ pub struct Cli {
     pub mock_api: bool,
 }
 
+/// Configuration structure for input and output paths.
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
     pub input_path: String,

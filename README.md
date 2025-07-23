@@ -19,6 +19,9 @@
 -   **Type-Safe Conversion of Special Return Types:**
     -   For Rust commands that return the `tauri::ipc::Response` type, it generates the `unknown` type on the TypeScript side. This encourages developers to explicitly cast the specific type of the low-level IPC response, maintaining type safety.
 
+-   **Automatic Generation of Event Handlers:**
+    -   Automatically generates type-safe TypeScript event handlers for both global and window-specific Tauri events, simplifying event subscription and handling in the frontend.
+
 -   **Directory Structure Preservation and Mocking Feature:**
     -   Outputs TypeScript functions in a way that preserves the Rust directory structure.
     -   Each TypeScript class is planned to have a feature that allows loading JSON data for mock behavior.
@@ -51,8 +54,8 @@ You can run the tool by specifying a configuration file or by providing paths di
 
     ```json
     {
-      "input_path": "src/commands.rs",
-      "output_path": "src/tauriCommands.ts"
+      "input_path": "src-tauri/src",
+      "output_path": "src/bindings"
     }
     ```
 
