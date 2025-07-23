@@ -7,10 +7,10 @@ export abstract class TauriMainWindowEventHandlers {
     protected constructor() {
         
         this.unlistenFns.push(
-            listen<T.EventPayload>('window-event', (event) => { this.OnWindowEvent(event); }));
+            listen<T.MainPayload>('main_event', (event) => { this.OnMainEvent(event); }));
         
         this.unlistenFns.push(
-            listen<T.MainPayload>('main_event', (event) => { this.OnMainEvent(event); }));
+            listen<T.EventPayload>('window-event', (event) => { this.OnWindowEvent(event); }));
         
     }
 
@@ -21,8 +21,8 @@ export abstract class TauriMainWindowEventHandlers {
     }
 
     
-    abstract OnWindowEvent(event: Event<T.EventPayload>): void;
-    
     abstract OnMainEvent(event: Event<T.MainPayload>): void;
+    
+    abstract OnWindowEvent(event: Event<T.EventPayload>): void;
     
 }

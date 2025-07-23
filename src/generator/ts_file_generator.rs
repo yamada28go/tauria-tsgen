@@ -78,8 +78,11 @@ pub fn generate_event_handler_files(
         .any(|event| event.payload_type.starts_with("T."));
 
     if !global_events.is_empty() {
+        let mut sorted_global_events = global_events.to_vec();
+        sorted_global_events.sort_by(|a, b| a.event_name.cmp(&b.event_name));
+
         let mut context = Context::new();
-        context.insert("global_events", global_events);
+        context.insert("global_events", &sorted_global_events);
         context.insert(
             "has_user_defined_types_in_global_events",
             &has_user_defined_types_in_global_events,
@@ -101,10 +104,11 @@ pub fn generate_event_handler_files(
         unique_window_names.dedup();
 
         for window_name in unique_window_names {
-            let events_for_window: Vec<_> = window_events
+            let mut events_for_window: Vec<_> = window_events
                 .iter()
                 .filter(|e| e.window_name == window_name)
                 .collect();
+            events_for_window.sort_by(|a, b| a.event_name.cmp(&b.event_name));
             let mut context = Context::new();
             context.insert("window_name", &window_name);
             context.insert("events", &events_for_window);
