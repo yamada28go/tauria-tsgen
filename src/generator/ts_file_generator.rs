@@ -55,9 +55,13 @@ pub fn generate_event_handler_files(
     let mut tera = Tera::default();
     register_tera_filters(&mut tera);
 
+    // all_extracted_types を取得する方法がないため、ここではペイロードタイプが "T." で始まるかどうかで簡易的に判定
+    let has_user_defined_types_in_global_events = global_events.iter().any(|event| event.payload_type.starts_with("T."));
+
     if !global_events.is_empty() {
         let mut context = Context::new();
         context.insert("global_events", global_events);
+        context.insert("has_user_defined_types_in_global_events", &has_user_defined_types_in_global_events); // この行を追加
         let asset = Asset::get("global_event_handler.tera").unwrap();
         let template = std::str::from_utf8(asset.data.as_ref())?;
         let rendered = tera.render_str(template, &context)?;

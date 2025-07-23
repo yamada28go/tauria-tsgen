@@ -36,7 +36,7 @@ struct EventVisitor<'a> {
 impl<'ast> Visit<'ast> for EventVisitor<'ast> {
     fn visit_expr_method_call(&mut self, node: &'ast ExprMethodCall) {
         let method_name = node.method.to_string();
-        if method_name == "emit" {
+        if method_name == "emit" || method_name == "emit_all" {
             if let Some(Expr::Lit(expr_lit)) = node.args.get(0) {
                 if let Lit::Str(lit_str) = &expr_lit.lit {
                     let event_name = lit_str.value();
