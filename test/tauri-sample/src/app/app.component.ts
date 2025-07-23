@@ -23,11 +23,9 @@ class ImpGlobal extends TauriGlobalEventHandlers {
     super();
   }
 
-     OnGlobal(event: Event<string>): void{
-      this.snackBar.open(`Global Event: ${event.payload}`, 'Close', { duration: 3000 });
-     }
-
-
+  OnGlobal(event: Event<string>): void {
+    this.snackBar.open(`Global Event: ${event.payload}`, 'Close', { duration: 3000 });
+  }
 }
 
 // --- Main Window ---
@@ -47,7 +45,6 @@ class ImpWindow extends TauriMainWindowEventHandlers {
   }
 }
 // --- Main Window ---
-
 
 @Component({
   selector: 'app-root',
@@ -70,9 +67,8 @@ export class AppComponent {
   lib: ILib;
 
   // イベントハンドラ
-  private  eventWindows ;
-private  eventGlobal ;
-
+  private eventWindows;
+  private eventGlobal;
 
   // greet_command
   greetName = '';
@@ -116,11 +112,9 @@ private  eventGlobal ;
     this.eventGlobal = new ImpGlobal(this.snackBar);
   }
 
-async  ngOnDestroy() {
-
-   await this.eventWindows.Unlisten();
-   await this.eventGlobal.Unlisten();
-
+  async ngOnDestroy() {
+    await this.eventWindows.Unlisten();
+    await this.eventGlobal.Unlisten();
   }
 
   async greet() {
@@ -196,5 +190,4 @@ async  ngOnDestroy() {
   async callMsgMain() {
     this.callMsgMainResult = await this.lib.callMsgMain();
   }
-
 }

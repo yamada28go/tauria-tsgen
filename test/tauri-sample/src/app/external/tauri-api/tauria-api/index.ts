@@ -1,3 +1,3 @@
 export * from './commands/Lib';
-export * from './events/GlobalEventHandlers';
-export * from './events/MainWindowEventHandlers';
+export * from './events/TauriGlobalEventHandlers';
+export * from './events/TauriMainWindowEventHandlers';

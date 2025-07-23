@@ -1,6 +1,6 @@
 import { Event, listen, UnlistenFn } from '@tauri-apps/api/event';
 
-export abstract class GlobalEventHandlers {
+export abstract class TauriGlobalEventHandlers {
   private readonly unlistenFns: Promise<UnlistenFn>[] = [];
 
   protected constructor() {
