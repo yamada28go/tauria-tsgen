@@ -24,5 +24,5 @@ fn emit_sub_event(window: WebviewWindow, payload: SubPayload) {
 
 #[tauri::command]
 fn emit_another_main_event(app: AppHandle) {
-    app.emit("another_main_event", "simple string").unwrap();
+    app.emit_to("another","another_main_event", "simple string").unwrap();
 }

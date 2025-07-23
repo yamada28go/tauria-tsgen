@@ -244,6 +244,10 @@ mod tests {
 
     #[allow(dead_code)]
     fn run_ts_wrapper_test(test_case_name: &str) {
+        if test_case_name == "event_window_many" {
+            run_multi_file_test();
+            return;
+        }
         use convert_case::{Case, Casing};
         let pascal_case_file_name = if test_case_name == "event_window" {
             "EventTest".to_string()
@@ -432,8 +436,53 @@ mod tests {
         run_ts_wrapper_test("event_window");
     }
 
-        #[test]
+    #[test]
     fn test_generate_ts_wrapper_for_event_window_many() {
         run_ts_wrapper_test("event_window_many");
+    }
+
+    fn run_multi_file_test() {
+        let test_case_name = "event_window_many";
+        let src_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("test/data")
+            .join(test_case_name)
+            .join("src");
+        let output_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("target/generated_ts")
+            .join(test_case_name);
+
+        if output_dir.exists() {
+            fs::remove_dir_all(&output_dir).unwrap();
+        }
+        fs::create_dir_all(&output_dir).unwrap();
+
+        let mut all_global_events = Vec::new();
+        let mut all_window_events = Vec::new();
+
+        for entry in fs::read_dir(src_dir).unwrap() {
+            let entry = entry.unwrap();
+            let path = entry.path();
+            if path.is_file() && path.extension().and_then(|s| s.to_str()) == Some("rs") {
+                let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap();
+                let rust_code = fs::read_to_string(&path).unwrap();
+                let (_, _, global_events, window_events) =
+                    generate_ts_files(&rust_code, &output_dir, file_name, false).unwrap();
+                all_global_events.extend(global_events);
+                all_window_events.extend(window_events);
+            }
+        }
+
+        generate_event_handler_files(&output_dir, &all_global_events, &all_window_events).unwrap();
+
+        compare_generated_files(
+            &output_dir,
+            test_case_name,
+            "tauria-api/events/GlobalEventHandlers.ts",
+        );
+        compare_generated_files(
+            &output_dir,
+            test_case_name,
+            "tauria-api/events/MainWindowEventHandlers.ts",
+        );
     }
 }

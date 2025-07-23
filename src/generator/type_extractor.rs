@@ -1,7 +1,11 @@
 use log::debug;
 use serde_json;
 use std::collections::HashMap;
-use syn::{Attribute, Expr, ExprMethodCall, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat, Type, UseTree, visit::{self, Visit},};
+use syn::{
+    Attribute, Expr, ExprMethodCall, Fields, FnArg, Item, ItemEnum, ItemStruct, Lit, Meta, Pat,
+    Type, UseTree,
+    visit::{self, Visit},
+};
 
 const IGNORED_TAURI_TYPES: &[&str] = &[
     "tauri::WebviewWindow",
@@ -46,17 +50,19 @@ impl<'ast, 'a> Visit<'ast> for EventCallFinder<'a> {
                                 } else {
                                     "void".to_string()
                                 };
-                                self.global_events.push(EventInfo { event_name, payload_type });
+                                self.global_events.push(EventInfo {
+                                    event_name,
+                                    payload_type,
+                                });
                             }
                         }
                     }
                 }
             }
         } else if method_name == "emit_to" {
-            if let (
-                Some(Expr::Lit(win_lit)),
-                Some(Expr::Lit(event_lit)),
-            ) = (node.args.get(0), node.args.get(1)) {
+            if let (Some(Expr::Lit(win_lit)), Some(Expr::Lit(event_lit))) =
+                (node.args.get(0), node.args.get(1))
+            {
                 if let (Lit::Str(win_str), Lit::Str(event_str)) = (&win_lit.lit, &event_lit.lit) {
                     let window_name = win_str.value();
                     let event_name = event_str.value();
