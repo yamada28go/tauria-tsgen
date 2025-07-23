@@ -373,7 +373,12 @@ pub(crate) fn type_to_ts(
                             {
                                 let inner_ts_type =
                                     type_to_ts(inner_type, defined_types, is_tauri_command_type);
-                                return format!("{inner_ts_type}[]");
+                                // If the inner type is a union, wrap it in parentheses
+                                if inner_ts_type.contains(" | ") {
+                                    return format!("({inner_ts_type})[]");
+                                } else {
+                                    return format!("{inner_ts_type}[]");
+                                }
                             }
                         }
                         "any[]".to_string() // 内部型が特定できない場合のフォールバック
@@ -1051,5 +1056,119 @@ mod tests {
             let doc_comment = extract_doc_comments(&func.attrs);
             assert_eq!(doc_comment, "");
         }
+    }
+
+    #[test]
+    fn test_type_to_ts() {
+        let defined_types = vec![
+            "MyStruct".to_string(),
+            "MyEnum".to_string(),
+            "AnotherType".to_string(),
+        ];
+
+        let parse_and_convert = |rust_type_str: &str, is_tauri_command: bool| -> String {
+            let ty: Type = syn::parse_str(rust_type_str).unwrap();
+            type_to_ts(&ty, &defined_types, is_tauri_command)
+        };
+
+        // Basic types
+        assert_eq!(parse_and_convert("String", false), "string");
+        assert_eq!(parse_and_convert("bool", false), "boolean");
+        assert_eq!(parse_and_convert("u32", false), "number");
+        assert_eq!(parse_and_convert("f64", false), "number");
+        assert_eq!(parse_and_convert("usize", false), "number");
+
+        // Option<T>
+        assert_eq!(
+            parse_and_convert("Option<String>", false),
+            "string | undefined"
+        );
+        assert_eq!(
+            parse_and_convert("Option<u32>", false),
+            "number | undefined"
+        );
+        assert_eq!(
+            parse_and_convert("Option<MyStruct>", false),
+            "MyStruct | undefined"
+        ); // User-defined type
+
+        // Vec<T>
+        assert_eq!(parse_and_convert("Vec<String>", false), "string[]");
+        assert_eq!(parse_and_convert("Vec<bool>", false), "boolean[]");
+        assert_eq!(parse_and_convert("Vec<MyEnum>", false), "MyEnum[]"); // User-defined type
+
+        // HashMap<K, V>
+        assert_eq!(
+            parse_and_convert("HashMap<String, u32>", false),
+            "Record<string, number>"
+        );
+        assert_eq!(
+            parse_and_convert("HashMap<String, MyStruct>", false),
+            "Record<string, MyStruct>"
+        );
+
+        // Result<T, E> (should return T)
+        assert_eq!(
+            parse_and_convert("Result<String, MyError>", false),
+            "string"
+        );
+        assert_eq!(parse_and_convert("Result<u32, MyError>", false), "number");
+        assert_eq!(
+            parse_and_convert("Result<MyStruct, MyError>", false),
+            "MyStruct"
+        );
+
+        // Reference types
+        assert_eq!(parse_and_convert("&str", false), "string");
+        assert_eq!(parse_and_convert("&String", false), "string");
+        assert_eq!(parse_and_convert("&u32", false), "number");
+
+        // Tuple types
+        assert_eq!(parse_and_convert("()", false), "void");
+        assert_eq!(
+            parse_and_convert("(String, u32)", false),
+            "[string, number]"
+        );
+        assert_eq!(
+            parse_and_convert("(String, MyStruct)", false),
+            "[string, MyStruct]"
+        );
+        assert_eq!(
+            parse_and_convert("(String, (u32, bool))", false),
+            "[string, [number, boolean]]"
+        );
+
+        // User-defined types
+        assert_eq!(parse_and_convert("MyStruct", false), "MyStruct"); // Not a tauri command type, so no T. prefix
+        assert_eq!(parse_and_convert("MyStruct", true), "T.MyStruct"); // Is a tauri command type, so T. prefix
+        assert_eq!(parse_and_convert("AnotherType", false), "AnotherType");
+        assert_eq!(
+            parse_and_convert("NonExistentType", false),
+            "T.NonExistentType"
+        ); // Not defined, so T. prefix
+
+        // Nested types
+        assert_eq!(
+            parse_and_convert("Option<Vec<String>>", false),
+            "string[] | undefined"
+        );
+        assert_eq!(
+            parse_and_convert("Vec<Option<u32>>", false),
+            "(number | undefined)[]"
+        );
+        assert_eq!(
+            parse_and_convert("HashMap<String, Vec<MyStruct>>", false),
+            "Record<string, MyStruct[]>"
+        );
+
+        // Unknown types (fallback to any)
+        assert_eq!(
+            parse_and_convert("SomeUnknownType", false),
+            "T.SomeUnknownType"
+        ); // Not in defined_types, so T. prefix
+        assert_eq!(
+            parse_and_convert("SomeUnknownType", true),
+            "T.SomeUnknownType"
+        ); // Not in defined_types, so T. prefix
     }
 }
