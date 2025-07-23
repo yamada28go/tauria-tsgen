@@ -140,6 +140,7 @@ mod tests {
             output_dir
                 .path()
                 .join("tauria-api")
+                .join("commands")
                 .join("TestCommands.ts")
                 .exists()
         );

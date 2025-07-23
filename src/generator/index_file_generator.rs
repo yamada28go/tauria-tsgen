@@ -267,12 +267,14 @@ mod tests {
                 ts_interface: json!({}),
                 is_serializable: false,
                 is_deserializable: false,
+                original_file_name: "file1".to_string(),
             },
             ExtractedTypeInfo {
                 name: "file2".to_string(),
                 ts_interface: json!({"name": "MyType", "type": "interface"}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "file2".to_string(),
             },
         ];
 
@@ -300,12 +302,14 @@ mod tests {
                 ts_interface: json!({"name": "TypeB", "type": "interface", "fields": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "file_b".to_string(),
             },
             ExtractedTypeInfo {
                 name: "file_a".to_string(),
                 ts_interface: json!({"name": "TypeA", "type": "interface", "fields": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "file_a".to_string(),
             },
         ];
         all_ts_interfaces.sort_by(|a, b| a.name.cmp(&b.name));
@@ -351,12 +355,14 @@ export interface TypeB {
                 ts_interface: json!({"name": "MyStruct", "type": "interface", "fields": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "my_types".to_string(),
             },
             ExtractedTypeInfo {
                 name: "my_types".to_string(),
                 ts_interface: json!({"name": "MyEnum", "type": "enum", "variants": []}),
                 is_serializable: true,
                 is_deserializable: true,
+                original_file_name: "my_types".to_string(),
             },
         ];
 
@@ -415,7 +421,7 @@ export interface TypeB {
 
         // tauria-api/index.ts のソート順を確認
         let expected_tauri_api_content =
-            "export * from \"./AFile\";\nexport * from \"./MFile\";\nexport * from \"./ZFile\";";
+            "export * from \"./commands/AFile\";\nexport * from \"./commands/MFile\";\nexport * from \"./commands/ZFile\";";
         assert_eq!(
             tauri_api_index_content.trim().replace("\r\n", "\n"),
             expected_tauri_api_content.trim().replace("\r\n", "\n"),

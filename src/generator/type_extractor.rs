@@ -808,7 +808,7 @@ mod tests {
             struct NoDerive;
         "#;
         let syntax = syn::parse_file(rust_code).unwrap();
-        let extracted_types = extract_and_convert_types(&syntax.items);
+        let extracted_types = extract_and_convert_types(&syntax.items, "test_file");
 
         assert_eq!(extracted_types.len(), 6);
 

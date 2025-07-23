@@ -292,7 +292,7 @@ mod tests {
             compare_generated_files(
                 &output_dir,
                 test_case_name,
-                &format!("tauria-api/{}.ts", pascal_case_file_name),
+                &format!("tauria-api/commands/{}.ts", pascal_case_file_name),
             );
         }
 
@@ -301,7 +301,7 @@ mod tests {
             compare_generated_files(
                 &output_dir,
                 test_case_name,
-                "tauria-api/GlobalEventHandlers.ts",
+                "tauria-api/event/GlobalEventHandlers.ts",
             );
         }
 
