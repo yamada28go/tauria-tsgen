@@ -420,8 +420,7 @@ export interface TypeB {
         );
 
         // tauria-api/index.ts のソート順を確認
-        let expected_tauri_api_content =
-            "export * from \"./commands/AFile\";\nexport * from \"./commands/MFile\";\nexport * from \"./commands/ZFile\";";
+        let expected_tauri_api_content = "export * from \"./commands/AFile\";\nexport * from \"./commands/MFile\";\nexport * from \"./commands/ZFile\";";
         assert_eq!(
             tauri_api_index_content.trim().replace("\r\n", "\n"),
             expected_tauri_api_content.trim().replace("\r\n", "\n"),
