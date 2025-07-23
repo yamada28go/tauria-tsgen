@@ -1,2 +1,2 @@
 export * from "./commands/EventGlobal";
-export * from "./events/GlobalEventHandlers";
+export * from "./events/TauriGlobalEventHandlers";
