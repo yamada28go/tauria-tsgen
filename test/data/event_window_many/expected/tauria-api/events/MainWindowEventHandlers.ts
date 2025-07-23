@@ -10,7 +10,7 @@ abstract class MainWindowEventHandlers {
             listen<T.EventPayload>('window-event', (event) => { this.OnWindowEvent(event); }));
         
         this.unlistenFns.push(
-            listen<T.payload>('main_event', (event) => { this.OnMainEvent(event); }));
+            listen<T.MainPayload>('main_event', (event) => { this.OnMainEvent(event); }));
         
     }
 
@@ -23,6 +23,6 @@ abstract class MainWindowEventHandlers {
     
     abstract OnWindowEvent(event: Event<T.EventPayload>): void;
     
-    abstract OnMainEvent(event: Event<T.payload>): void;
+    abstract OnMainEvent(event: Event<T.MainPayload>): void;
     
 }
