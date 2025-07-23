@@ -1,5 +1,7 @@
 import { Event, listen, UnlistenFn } from "@tauri-apps/api/event";
 
+
+
 abstract class GlobalEventHandlers {
     private readonly unlistenFns: Promise<UnlistenFn>[] = [];
 
