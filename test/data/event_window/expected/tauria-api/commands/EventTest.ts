@@ -4,22 +4,22 @@
 // Manually modifying it may break the interface and lead to unintended consequences. 
 // Please exercise great caution if you choose to make manual changes.
 //
-// target file : window.rs
+// target file : event_test.rs
 
 
 import { invoke } from '@tauri-apps/api/core';
-import * as T from '../interface/';
+import * as T from '../../interface/';
 
 // tauri command interface class 
-// target file : window.rs
-class Window implements T.IWindow {
+// target file : event_test.rs
+class EventTest implements T.IEventTest {
 
     //#region #tauri command
     
     /**
 **/
-    async myCustomCommand(): Promise<void> {
-        return await invoke('my_custom_command', {  });
+    async eventTestCommand(): Promise<void> {
+        return await invoke('event_test_command', {  });
     }
     
     //#endregion
@@ -28,14 +28,14 @@ class Window implements T.IWindow {
     //#region #endregion
     private constructor() {}
 
-    static create(): T.IWindow  {
-        return new Window();
+    static create(): T.IEventTest  {
+        return new EventTest();
     }
     //#endregion
 
 }
 
 // factory function
-export function createWindow(): T.IWindow {
-    return Window.create();
+export function createEventTest(): T.IEventTest {
+    return EventTest.create();
 }

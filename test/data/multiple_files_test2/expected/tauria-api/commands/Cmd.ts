@@ -4,15 +4,15 @@
 // Manually modifying it may break the interface and lead to unintended consequences. 
 // Please exercise great caution if you choose to make manual changes.
 //
-// target file : cmd1.rs
+// target file : cmd.rs
 
 
 import { invoke } from '@tauri-apps/api/core';
-import * as T from '../interface/';
+import * as T from '../../interface/';
 
 // tauri command interface class 
-// target file : cmd1.rs
-class Cmd1 implements T.ICmd1 {
+// target file : cmd.rs
+class Cmd implements T.ICmd {
 
     //#region #tauri command
     
@@ -30,14 +30,14 @@ class Cmd1 implements T.ICmd1 {
     //#region #endregion
     private constructor() {}
 
-    static create(): T.ICmd1  {
-        return new Cmd1();
+    static create(): T.ICmd  {
+        return new Cmd();
     }
     //#endregion
 
 }
 
 // factory function
-export function createCmd1(): T.ICmd1 {
-    return Cmd1.create();
+export function createCmd(): T.ICmd {
+    return Cmd.create();
 }

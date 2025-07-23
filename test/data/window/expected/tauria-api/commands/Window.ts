@@ -4,28 +4,22 @@
 // Manually modifying it may break the interface and lead to unintended consequences. 
 // Please exercise great caution if you choose to make manual changes.
 //
-// target file : response.rs
+// target file : window.rs
 
 
 import { invoke } from '@tauri-apps/api/core';
-import * as T from '../interface/';
+import * as T from '../../interface/';
 
 // tauri command interface class 
-// target file : response.rs
-class Response implements T.IResponse {
+// target file : window.rs
+class Window implements T.IWindow {
 
     //#region #tauri command
     
     /**
 **/
-    async readFile1(): Promise<unknown> {
-        return await invoke('read_file1', {  });
-    }
-    
-    /**
-**/
-    async readFile2(): Promise<unknown> {
-        return await invoke('read_file2', {  });
+    async myCustomCommand(): Promise<void> {
+        return await invoke('my_custom_command', {  });
     }
     
     //#endregion
@@ -34,14 +28,14 @@ class Response implements T.IResponse {
     //#region #endregion
     private constructor() {}
 
-    static create(): T.IResponse  {
-        return new Response();
+    static create(): T.IWindow  {
+        return new Window();
     }
     //#endregion
 
 }
 
 // factory function
-export function createResponse(): T.IResponse {
-    return Response.create();
+export function createWindow(): T.IWindow {
+    return Window.create();
 }

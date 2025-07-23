@@ -1,1 +1,1 @@
-export * from "./NestingTypeTest";
+export * from "./commands/NestingTypeTest";

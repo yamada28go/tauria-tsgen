@@ -1,1 +1,1 @@
-export * from "./WebviewWindow";
+export * from "./commands/WebviewWindow";

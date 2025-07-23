@@ -4,17 +4,25 @@
 // Manually modifying it may break the interface and lead to unintended consequences. 
 // Please exercise great caution if you choose to make manual changes.
 //
-// target file : cmd2.rs
+// target file : struct_test.rs
 
 
 import { invoke } from '@tauri-apps/api/core';
-import * as T from '../interface/';
+import * as T from '../../interface/';
 
 // tauri command interface class 
-// target file : cmd2.rs
-class Cmd2 implements T.ICmd2 {
+// target file : struct_test.rs
+class StructTest implements T.IStructTest {
 
     //#region #tauri command
+    
+    /**
+* ユーザー情報を取得するTauriコマンド**
+     * # 引数* * `id` - ユーザーのID**
+     * # 戻り値* 指定されたIDに対応するユーザー情報（ダミーデータ）*/
+    async getUserData(id: number): Promise<T.User> {
+        return await invoke('get_user_data', { id: id });
+    }
     
     /**
 * 商品情報を取得するTauriコマンド**
@@ -30,14 +38,14 @@ class Cmd2 implements T.ICmd2 {
     //#region #endregion
     private constructor() {}
 
-    static create(): T.ICmd2  {
-        return new Cmd2();
+    static create(): T.IStructTest  {
+        return new StructTest();
     }
     //#endregion
 
 }
 
 // factory function
-export function createCmd2(): T.ICmd2 {
-    return Cmd2.create();
+export function createStructTest(): T.IStructTest {
+    return StructTest.create();
 }

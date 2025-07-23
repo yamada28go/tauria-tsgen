@@ -1,6 +1,6 @@
 import { Event, UnlistenFn } from "@tauri-apps/api/event";
 import * as W from "@tauri-apps/api/window";
-import * as T from "../interface/types";
+import * as T from "../../interface/types";
 
 abstract class MainWindowEventHandlers {
     private readonly unlistenFns: Promise<UnlistenFn>[] = [];

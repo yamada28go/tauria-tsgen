@@ -8,7 +8,7 @@
 
 
 import { invoke } from '@tauri-apps/api/core';
-import * as T from '../interface/';
+import * as T from '../../interface/';
 
 // tauri command interface class 
 // target file : event_global.rs

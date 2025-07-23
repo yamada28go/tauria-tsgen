@@ -1,1 +1,1 @@
-export * from "./EnumTest";
+export * from "./commands/EnumTest";

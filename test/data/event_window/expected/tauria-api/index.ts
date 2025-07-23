@@ -1,2 +1,2 @@
-export * from "./EventTest";
-export * from "../interface/events/MainWindowEventHandlers";
+export * from "./commands/EventTest";
+export * from "./events/MainWindowEventHandlers";
