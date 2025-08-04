@@ -40,9 +40,12 @@ async function downloadBinary() {
       process.exit(1);
   }
 
+//tauria-tsgen-windows-x86_64.zip
+
+
   switch (arch) {
     case 'x64':
-      targetArch = 'x64';
+      targetArch = 'x86_64';
       break;
     case 'arm64':
       if (platform === 'darwin') { // macOS (Apple Silicon)
@@ -129,19 +132,57 @@ async function setExecutablePermissions() {
   }
 }
 
-function createBinSymlink() {
-  // __dirname = .../node_modules/tauria-tsgen/scripts
-  const pkgRoot   = path.resolve(__dirname, '..');            // .../node_modules/tauria-tsgen
-  const nmDir     = path.resolve(pkgRoot, '..');              // .../node_modules
-  const linkDir   = path.join(nmDir, '.bin');                 // .../node_modules/.bin
-  const targetBin = path.join(pkgRoot, 'bin', packageName + (platform === 'win32' ? '.exe' : ''));
-  const linkPath  = path.join(linkDir, packageName);
+/**
+ * node_modules/.bin 以下に
+ * - Windows: .cmd シムを作成
+ * - macOS/Linux: 実バイナリへのシンボリックリンクを作成
+ */
+ function createBinSymlink()  {
+  // パスの準備
+  const pkgRoot   = path.resolve(__dirname, '..');      // .../node_modules/tauria-tsgen
+  const nmDir     = path.resolve(pkgRoot, '..');        // .../node_modules
+  const linkDir   = path.join(nmDir, '.bin');           // .../node_modules/.bin
+  const binDir    = path.join(pkgRoot, 'bin');          // .../node_modules/tauria-tsgen/bin
+  const exeName   = packageName + (platform === 'win32' ? '.exe' : '');
+  const targetBin = path.join(binDir, exeName);
 
-  if (!fs.existsSync(linkDir)) fs.mkdirSync(linkDir, { recursive: true });
-  if (fs.existsSync(linkPath)) fs.unlinkSync(linkPath);
+  // .bin ディレクトリを作成（存在しなければ）
+  if (!fs.existsSync(linkDir)) {
+    fs.mkdirSync(linkDir, { recursive: true });
+  }
 
-  fs.symlinkSync(targetBin, linkPath, 'file');
-  console.log(`Linked: ${linkPath} → ${targetBin}`);
+  if (platform === 'win32') {
+    // ─────────────── Windows: .cmd シムを生成 ───────────────
+    const shimPath = path.join(linkDir, `${packageName}.cmd`);
+    // 既存ファイルがあれば削除
+    if (fs.existsSync(shimPath)) {
+      fs.unlinkSync(shimPath);
+    }
+    // npm と同等のラッパー内容
+    const shimContent = [
+      '@echo off',
+      `setlocal`,
+      // 実バイナリが同階層ないし親階層にある場合を考慮して相対パス指定
+      `"%~dp0\\..\\tauria-tsgen\\bin\\${exeName}" %*`,
+      `endlocal`,
+    ].join('\r\n');
+
+    fs.writeFileSync(shimPath, shimContent, 'utf8');
+    console.log(`Created Windows CMD shim: ${shimPath}`);
+
+  } else {
+    // ─────────────── macOS/Linux: シンボリックリンクを生成 ───────────────
+    const linkPath = path.join(linkDir, packageName);
+
+    // 既存のリンク／ファイルを削除
+    if (fs.existsSync(linkPath)) {
+      fs.unlinkSync(linkPath);
+    }
+
+    // file タイプのシンボリックリンクを作成
+    fs.symlinkSync(targetBin, linkPath, 'file');
+    console.log(`Created symlink: ${linkPath} → ${targetBin}`);
+  }
 }
 
 async function main() {
