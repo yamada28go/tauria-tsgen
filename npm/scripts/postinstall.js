@@ -40,9 +40,12 @@ async function downloadBinary() {
       process.exit(1);
   }
 
+//tauria-tsgen-windows-x86_64.zip
+
+
   switch (arch) {
     case 'x64':
-      targetArch = 'x64';
+      targetArch = 'x86_64';
       break;
     case 'arm64':
       if (platform === 'darwin') { // macOS (Apple Silicon)
